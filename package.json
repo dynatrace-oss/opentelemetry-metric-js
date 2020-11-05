@@ -1,0 +1,40 @@
+{
+  "name": "@dynatrace/opentelemetry-exporter-metrics",
+  "version": "0.0.1",
+  "description": "OpenTelemetry metrics exporter for Dynatrace",
+  "main": "index.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dynatrace-oss/opentelemetry-metrics-js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dynatrace-oss/opentelemetry-metrics-js/issues"
+  },
+  "homepage": "https://github.com/dynatrace-oss/opentelemetry-metrics-js#readme",
+  "dependencies": {
+    "@opentelemetry/api": "^0.12.0",
+    "@opentelemetry/core": "^0.12.0",
+    "@opentelemetry/metrics": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^14.14.6",
+    "codecov": "^3.8.1",
+    "gts": "^3.0.2",
+    "mocha": "^8.2.1",
+    "nyc": "^15.1.0",
+    "rimraf": "^3.0.2",
+    "ts-mocha": "^8.0.0",
+    "ts-node": "^9.0.0",
+    "tslint-microsoft-contrib": "^6.2.0",
+    "typescript": "^4.0.5"
+  }
+}
