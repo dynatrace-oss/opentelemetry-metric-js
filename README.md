@@ -1,4 +1,4 @@
-# opentelemetry-metrics-<language>
+# OpenTelemetry metric exporter for Dynatrace
 
 Please add this preamble to all your code files:
 ```
