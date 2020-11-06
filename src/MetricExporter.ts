@@ -14,33 +14,136 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ExportResult, NoopLogger } from "@opentelemetry/core";
+import { ExportResult, hrTimeToMilliseconds, NoopLogger } from "@opentelemetry/core";
 import * as api from '@opentelemetry/api';
-import { MetricExporter, MetricRecord } from "@opentelemetry/metrics";
+import { AggregatorKind, MetricExporter, MetricKind, MetricRecord, Point } from "@opentelemetry/metrics";
 import { ExporterConfig } from "./export/types";
+import axios from 'axios';
+
+
+type DynatraceDataTypeLiteral =
+  | 'counter'
+  | 'gauge'
+  | 'unsupported';
+
+function toDynatraceType(
+  metricKind: MetricKind,
+  aggregatorKind: AggregatorKind
+): DynatraceDataTypeLiteral {
+  switch (aggregatorKind) {
+    case AggregatorKind.SUM:
+      if (
+        metricKind === MetricKind.COUNTER ||
+        metricKind === MetricKind.SUM_OBSERVER
+      ) {
+        return 'counter';
+      }
+      return 'gauge';
+    case AggregatorKind.LAST_VALUE:
+      return 'gauge';
+    // case AggregatorKind.HISTOGRAM:
+    //  return 'histogram';
+    default:
+      return 'unsupported';
+  }
+}
 
 export class DynatraceMetricExporter implements MetricExporter {
 
-  static readonly DEFAULT_OPTIONS = {
-
+  private readonly DEFAULT_OPTIONS = {
+    url: 'http://127.0.0.1:14499/metrics/ingest',
   }
 
   private readonly _logger: api.Logger;
-
-
-  export(metrics: MetricRecord[], resultCallback: (result: ExportResult) => void): void {
-    throw new Error("Method not implemented.");
-  }
-
-  shutdown(): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
+  private readonly _url: string;
+  private readonly _APIToken: string;
+  private readonly _prefix: string;
 
   /**
    * Constructor
    * @param config Exporter configuration
-   */
+  */
   constructor(config: ExporterConfig = {}) {
     this._logger = config.logger || new NoopLogger();
+    this._url = config.url || this.DEFAULT_OPTIONS.url;
+    this._APIToken = config.APIToken || '';
+    this._prefix = config.prefix || '';
+  }
+
+  export(metrics: MetricRecord[], resultCallback: (result: ExportResult) => void): void {
+    const linestrings: Array<string> = [];
+    metrics.forEach((metric) => {
+      const metricLine: Array<string> = [];
+      metricLine.push(this.formatMetricKey(metric));
+      metricLine.push(this.formatDimensions(metric));
+      switch (metric.aggregator.kind) {
+        case AggregatorKind.SUM: {
+          const data = metric.aggregator.toPoint();
+
+          if (metric.descriptor.metricKind === MetricKind.COUNTER || metric.descriptor.metricKind === MetricKind.SUM_OBSERVER) {
+            metricLine.push(this.formatCount(data.value));
+          } else {
+            metricLine.push(this.formatGauge(data.value));
+          }
+          break;
+        }
+        case AggregatorKind.HISTOGRAM: {
+          this._logger.debug('HISTOGRAM is not implemented');
+          break;
+        }
+        case AggregatorKind.LAST_VALUE: {
+          this._logger.debug('LAST_VALUE is not implemented');
+          break;
+        }
+      }
+
+      const ts = this.formatTimestamp(metric.aggregator.toPoint().timestamp);
+
+      const lineString = `${metricLine.join('')}`;
+      linestrings.push(lineString);
+      axios({
+        method: 'post',
+        url: this._url,
+        headers: {
+          'Authorization': `Api-Token ${this._APIToken}`,
+          'Content-Type': 'text/plain; charset=utf-8',
+        },
+        data: linestrings.join("\n"),
+      }).then((res) => {
+        console.log(res);
+      }).catch((err) => {
+        console.error(err.response.data.error);
+      });
+
+
+    });
+  }
+
+
+  private formatMetricKey(metric: MetricRecord) {
+    return this._prefix ? `${this._prefix}.${metric.descriptor.name}` : metric.descriptor.name;
+  }
+
+  private formatDimensions(metric: MetricRecord) {
+    const labels = Object.keys(metric.labels)
+      .map(k => `${k}=${metric.labels[k]}`)
+      .join(',');
+    return `,${labels}`;
+  }
+
+  private formatTimestamp(ts: api.HrTime) {
+    return ts[0] * 1000 + ts[1];
+  }
+
+  private formatCount(value: number) {
+    return ` count,delta=${value}`;
+  }
+
+  private formatGauge(value: number) {
+    return ` gauge,${value}`;
+  }
+
+  shutdown(): Promise<void> {
+    throw new Error("Method not implemented.");
   }
 }

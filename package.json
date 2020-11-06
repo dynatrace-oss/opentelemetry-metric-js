@@ -2,7 +2,8 @@
   "name": "@dynatrace/opentelemetry-exporter-metrics",
   "version": "0.0.1",
   "description": "OpenTelemetry metrics exporter for Dynatrace",
-  "main": "index.js",
+  "main": "build/src/index.js",
+  "types": "build/src/index.d.ts",
   "directories": {
     "example": "example"
   },
@@ -22,7 +23,8 @@
   "dependencies": {
     "@opentelemetry/api": "^0.12.0",
     "@opentelemetry/core": "^0.12.0",
-    "@opentelemetry/metrics": "^0.12.0"
+    "@opentelemetry/metrics": "^0.12.0",
+    "axios": "^0.21.0"
   },
   "devDependencies": {
     "@types/mocha": "^8.0.3",
