@@ -20,34 +20,6 @@ import { AggregatorKind, MetricExporter, MetricKind, MetricRecord, Point } from 
 import { ExporterConfig } from "./export/types";
 import axios from 'axios';
 
-
-type DynatraceDataTypeLiteral =
-  | 'counter'
-  | 'gauge'
-  | 'unsupported';
-
-function toDynatraceType(
-  metricKind: MetricKind,
-  aggregatorKind: AggregatorKind
-): DynatraceDataTypeLiteral {
-  switch (aggregatorKind) {
-    case AggregatorKind.SUM:
-      if (
-        metricKind === MetricKind.COUNTER ||
-        metricKind === MetricKind.SUM_OBSERVER
-      ) {
-        return 'counter';
-      }
-      return 'gauge';
-    case AggregatorKind.LAST_VALUE:
-      return 'gauge';
-    // case AggregatorKind.HISTOGRAM:
-    //  return 'histogram';
-    default:
-      return 'unsupported';
-  }
-}
-
 export class DynatraceMetricExporter implements MetricExporter {
 
   private readonly DEFAULT_OPTIONS = {
@@ -99,8 +71,9 @@ export class DynatraceMetricExporter implements MetricExporter {
 
       const ts = this.formatTimestamp(metric.aggregator.toPoint().timestamp);
 
-      const lineString = `${metricLine.join('')}`;
+      const lineString = `${metricLine.join('')} ${ts}`;
       linestrings.push(lineString);
+      // Todo use raw HTTP
       axios({
         method: 'post',
         url: this._url,
@@ -115,15 +88,17 @@ export class DynatraceMetricExporter implements MetricExporter {
         console.error(err.response.data.error);
       });
 
+      // Todo: return exporter result
 
     });
   }
 
-
+  // Todo: add sanitization
   private formatMetricKey(metric: MetricRecord) {
     return this._prefix ? `${this._prefix}.${metric.descriptor.name}` : metric.descriptor.name;
   }
 
+  // Todo add tags
   private formatDimensions(metric: MetricRecord) {
     const labels = Object.keys(metric.labels)
       .map(k => `${k}=${metric.labels[k]}`)
@@ -132,7 +107,7 @@ export class DynatraceMetricExporter implements MetricExporter {
   }
 
   private formatTimestamp(ts: api.HrTime) {
-    return ts[0] * 1000 + ts[1];
+    return hrTimeToMilliseconds(ts);
   }
 
   private formatCount(value: number) {
@@ -143,6 +118,7 @@ export class DynatraceMetricExporter implements MetricExporter {
     return ` gauge,${value}`;
   }
 
+  // Todo: Flush?
   shutdown(): Promise<void> {
     throw new Error("Method not implemented.");
   }
