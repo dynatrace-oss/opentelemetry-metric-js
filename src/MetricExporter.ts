@@ -73,24 +73,28 @@ export class DynatraceMetricExporter implements MetricExporter {
 
       const lineString = `${metricLine.join('')} ${ts}`;
       linestrings.push(lineString);
-      // Todo use raw HTTP
-      axios({
-        method: 'post',
-        url: this._url,
-        headers: {
-          'Authorization': `Api-Token ${this._APIToken}`,
-          'Content-Type': 'text/plain; charset=utf-8',
-        },
-        data: linestrings.join("\n"),
-      }).then((res) => {
-        console.log(res);
-      }).catch((err) => {
-        console.error(err.response.data.error);
-      });
-
-      // Todo: return exporter result
-
     });
+
+    const headers: Record<string, string> = {};
+    headers['Content-Type'] = 'text/plain; charset=utf-8';
+
+    if (this._APIToken !== '') {
+      headers['Authorization'] = `Api-Token ${this._APIToken}`;
+    }
+
+    // Todo use raw HTTP
+    axios({
+      method: 'post',
+      url: this._url,
+      headers,
+      data: linestrings.join("\n"),
+    }).then((res) => {
+      console.log(res);
+    }).catch((err) => {
+      console.error(err.response.data.error);
+    });
+
+    // Todo: return exporter result
   }
 
   // Todo: add sanitization
