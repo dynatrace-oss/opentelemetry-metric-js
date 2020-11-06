@@ -53,4 +53,3 @@ export interface ExporterConfig {
   logger?: api.Logger;
 }
 
-export interface Metric
