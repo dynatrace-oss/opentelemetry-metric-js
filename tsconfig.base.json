@@ -9,7 +9,7 @@
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-    "noUnusedLocals": false,
+    "noUnusedLocals": true,
     "pretty": true,
     "sourceMap": true,
     "strict": true,
