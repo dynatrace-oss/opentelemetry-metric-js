@@ -14,22 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ExportResult, hrTimeToMilliseconds, NoopLogger } from "@opentelemetry/core";
 import * as api from '@opentelemetry/api';
-import { AggregatorKind, MetricExporter, MetricKind, MetricRecord, Point } from "@opentelemetry/metrics";
+import { ExportResult, NoopLogger } from "@opentelemetry/core";
+import { MetricExporter, MetricRecord } from "@opentelemetry/metrics";
+import * as http from 'http';
+import * as https from 'https';
+import * as url from 'url';
 import { ExporterConfig } from "./export/types";
-import axios from 'axios';
+import { serializeMetrics } from './serialization';
+
+const cDefaultBaseUrl = 'http://127.0.0.1:14499/metrics/ingest';
 
 export class DynatraceMetricExporter implements MetricExporter {
-
-  private readonly DEFAULT_OPTIONS = {
-    url: 'http://127.0.0.1:14499/metrics/ingest',
-  }
-
   private readonly _logger: api.Logger;
-  private readonly _url: string;
-  private readonly _APIToken: string;
   private readonly _prefix: string;
+  private readonly _reqOpts: http.RequestOptions;
+  private readonly _httpRequest: typeof http.request | typeof https.request;
+  private readonly _userTags: string;
+  private _isShutdown = false;
 
   /**
    * Constructor
@@ -37,93 +39,99 @@ export class DynatraceMetricExporter implements MetricExporter {
   */
   constructor(config: ExporterConfig = {}) {
     this._logger = config.logger || new NoopLogger();
-    this._url = config.url || this.DEFAULT_OPTIONS.url;
-    this._APIToken = config.APIToken || '';
     this._prefix = config.prefix || '';
+    this._userTags = (config.tags || []).join(",");
+
+    const urlObj = new url.URL(config.url ?? cDefaultBaseUrl);
+    let proto = this._getHttpProto(urlObj);
+    this._httpRequest = proto.request;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'text/plain; charset=utf-8',
+    };
+
+    if (config.APIToken) {
+      headers.Authorization = `Api-Token ${config.APIToken}`;
+    }
+
+    this._reqOpts = {
+      method: "POST",
+      hostname: urlObj.hostname,
+      port: urlObj.port,
+      path: urlObj.pathname,
+      agent: new proto.Agent({
+        keepAlive: true,
+        maxSockets: 1
+      }),
+      headers,
+    };
   }
 
   export(metrics: MetricRecord[], resultCallback: (result: ExportResult) => void): void {
-    const linestrings: Array<string> = [];
-    metrics.forEach((metric) => {
-      const metricLine: Array<string> = [];
-      metricLine.push(this.formatMetricKey(metric));
-      metricLine.push(this.formatDimensions(metric));
-      switch (metric.aggregator.kind) {
-        case AggregatorKind.SUM: {
-          const data = metric.aggregator.toPoint();
-
-          if (metric.descriptor.metricKind === MetricKind.COUNTER || metric.descriptor.metricKind === MetricKind.SUM_OBSERVER) {
-            metricLine.push(this.formatCount(data.value));
-          } else {
-            metricLine.push(this.formatGauge(data.value));
-          }
-          break;
-        }
-        case AggregatorKind.HISTOGRAM: {
-          this._logger.debug('HISTOGRAM is not implemented');
-          break;
-        }
-        case AggregatorKind.LAST_VALUE: {
-          this._logger.debug('LAST_VALUE is not implemented');
-          break;
-        }
-      }
-
-      const ts = this.formatTimestamp(metric.aggregator.toPoint().timestamp);
-
-      const lineString = `${metricLine.join('')} ${ts}`;
-      linestrings.push(lineString);
-    });
-
-    const headers: Record<string, string> = {};
-    headers['Content-Type'] = 'text/plain; charset=utf-8';
-
-    if (this._APIToken !== '') {
-      headers['Authorization'] = `Api-Token ${this._APIToken}`;
+    if (metrics.length === 0) {
+      process.nextTick(resultCallback, ExportResult.SUCCESS);
+      return;
     }
 
-    // Todo use raw HTTP
-    axios({
-      method: 'post',
-      url: this._url,
-      headers,
-      data: linestrings.join("\n"),
-    }).then((res) => {
-      console.log(res);
-    }).catch((err) => {
-      console.error(err.response.data.error);
-    });
+    if (this._isShutdown) {
+      process.nextTick(resultCallback, ExportResult.FAILED_NOT_RETRYABLE);
+      return;
+    }
 
-    // Todo: return exporter result
+    const payload = serializeMetrics(metrics, this._userTags, this._prefix);
+    console.log(payload)
+
+    const request = this._httpRequest(this._reqOpts);
+    const self = this;
+
+    function onResponse(res: http.IncomingMessage) {
+      self._logger.debug(`request#onResponse: statusCode: ${res.statusCode}`);
+
+      res.resume();	// discard any incoming data
+
+      res.on("error", (e) => {
+        // no need for handling a response error as a valid statusCode has
+        // been received before which indicates message was received
+        self._logger.debug(`response#error: ${e.message}`);
+      });
+
+      if (res.statusCode != null && res.statusCode >= 200 && res.statusCode < 300) {
+        process.nextTick(resultCallback, ExportResult.SUCCESS);
+      } else if (res.statusCode === 401 || res.statusCode === 403) {
+        self._logger.warn("Not authorized to send spans to Dynatrace");
+        // 401/403 is permanent
+        self._isShutdown = true;
+        process.nextTick(resultCallback, ExportResult.FAILED_NOT_RETRYABLE);
+      } else {
+        self._logger.warn(`Received status code ${res.statusCode} from Dynatrace`);
+        process.nextTick(resultCallback, ExportResult.FAILED_RETRYABLE);
+      }
+    }
+
+    function onError(err: Error) {
+      // TODO
+      process.nextTick(resultCallback, ExportResult.FAILED_NOT_RETRYABLE);
+    }
+
+    request.on("response", onResponse)
+    request.on("error", onError);
+
+    request.end(payload);
   }
 
-  // Todo: add sanitization
-  private formatMetricKey(metric: MetricRecord) {
-    return this._prefix ? `${this._prefix}.${metric.descriptor.name}` : metric.descriptor.name;
+  private _getHttpProto(urlObj: url.URL) {
+    let proto: typeof https | typeof http;
+    switch (urlObj.protocol) {
+      case "http:": proto = http; break;
+      case "https:": proto = https; break;
+      default: throw new RangeError("DynatraceMetricExporter: options.url protocol unsupported");
+    }
+    return proto;
   }
 
-  // Todo add tags
-  private formatDimensions(metric: MetricRecord) {
-    const labels = Object.keys(metric.labels)
-      .map(k => `${k}=${metric.labels[k]}`)
-      .join(',');
-    return `,${labels}`;
-  }
-
-  private formatTimestamp(ts: api.HrTime) {
-    return hrTimeToMilliseconds(ts);
-  }
-
-  private formatCount(value: number) {
-    return ` count,delta=${value}`;
-  }
-
-  private formatGauge(value: number) {
-    return ` gauge,${value}`;
-  }
-
-  // Todo: Flush?
   shutdown(): Promise<void> {
-    throw new Error("Method not implemented.");
+    // no buffer to flush;
+    this._isShutdown = true;
+    return Promise.resolve();
   }
 }
