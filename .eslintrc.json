@@ -1,0 +1,191 @@
+{
+	"root": true,
+	"env": {
+		"es6": false,
+		"node": true
+	},
+	"extends": [
+		"plugin:@typescript-eslint/recommended",
+		"plugin:@typescript-eslint/recommended-requiring-type-checking"
+	],
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"project": "./tsconfig.json"
+	},
+	"plugins": [
+		"@typescript-eslint",
+		"deprecation",
+		"header"
+	],
+	"rules": {
+		"@typescript-eslint/ban-ts-comment": [
+			"error",
+			{
+				"ts-ignore": "allow-with-description",
+				"ts-expect-error": "allow-with-description"
+			}
+		],
+		"@typescript-eslint/consistent-type-definitions": "error",
+		"@typescript-eslint/indent": [
+			"error",
+			"tab",
+			{
+				"SwitchCase": 1,
+				"FunctionDeclaration": {
+					"parameters": "off"
+				},
+				"FunctionExpression": {
+					"parameters": "off"
+				},
+				"CallExpression": {
+					"arguments": "off"
+				}
+			}
+		],
+		"@typescript-eslint/member-delimiter-style": [
+			"error",
+			{
+				"multiline": {
+					"delimiter": "semi",
+					"requireLast": true
+				},
+				"singleline": {
+					"delimiter": "semi",
+					"requireLast": false
+				}
+			}
+		],
+		"@typescript-eslint/no-explicit-any": "error",
+		"@typescript-eslint/no-non-null-assertion": "off",
+		"@typescript-eslint/no-shadow": [
+			"error",
+			{
+				"hoist": "all"
+			}
+		],
+		"@typescript-eslint/no-this-alias": "off",
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/no-unused-vars": "off",
+		"@typescript-eslint/no-var-requires": "error",
+		"@typescript-eslint/prefer-for-of": "error",
+		"@typescript-eslint/prefer-function-type": "error",
+		"@typescript-eslint/quotes": [
+			"error",
+			"double",
+			{
+				"avoidEscape": true
+			}
+		],
+		"@typescript-eslint/restrict-template-expressions": "off",
+		"@typescript-eslint/semi": [
+			"error",
+			"always"
+		],
+		"@typescript-eslint/space-before-function-paren": [
+			"error",
+			{
+				"anonymous": "never",
+				"asyncArrow": "always",
+				"named": "never"
+			}
+		],
+		"@typescript-eslint/unbound-method": "off",
+		"@typescript-eslint/unified-signatures": "error",
+		"block-spacing": "error",
+		"brace-style": [
+			"error",
+			"1tbs",
+			{
+				"allowSingleLine": true
+			}
+		],
+		"comma-dangle": "error",
+		"constructor-super": "error",
+		"curly": "error",
+		"deprecation/deprecation": "error",
+		"dot-notation": ["error", {"allowPattern": "^_"}],
+		"eol-last": [
+			"error",
+			"always"
+		],
+		"eqeqeq": [
+			"error",
+			"smart"
+		],
+		"guard-for-in": "error",
+		"header/header": [
+			"error",
+			"block",
+			[
+				"",
+				{ "pattern": "\tCopyright \\d{4} Dynatrace LLC", "template": "\tCopyright 2020 Dynatrace LLC" },
+				"",
+				"\tLicensed under the Apache License, Version 2.0 (the \"License\");",
+				"\tyou may not use this file except in compliance with the License.",
+				"\tYou may obtain a copy of the License at",
+				"",
+				"\thttp://www.apache.org/licenses/LICENSE-2.0",
+				"",
+				"\tUnless required by applicable law or agreed to in writing, software",
+				"\tdistributed under the License is distributed on an \"AS IS\" BASIS,",
+				"\tWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.",
+				"\tSee the License for the specific language governing permissions and",
+				"\tlimitations under the License.",
+				""
+			]
+		],
+		"id-blacklist": [
+			"error",
+			"any",
+			"Boolean",
+			"boolean"
+		],
+		"id-match": "error",
+		"keyword-spacing": "error",
+		"max-len": [
+			"error",
+			{
+				"code": 200,
+				"ignoreStrings": true
+			}
+		],
+		"new-parens": "error",
+		"no-bitwise": "error",
+		"no-caller": "error",
+		"no-cond-assign": "error",
+		"no-console": "error",
+		"no-debugger": "error",
+		"no-empty": "error",
+		"no-eval": "error",
+		"no-mixed-spaces-and-tabs": "error",
+		"no-multiple-empty-lines": [
+			"error",
+			{
+				"max": 5
+			}
+		],
+		"no-new-wrappers": "error",
+		"no-shadow": "off",
+		"no-throw-literal": "error",
+		"no-trailing-spaces": "error",
+		"no-undef-init": "error",
+		"no-unsafe-finally": "error",
+		"no-unused-expressions": "error",
+		"no-unused-labels": "error",
+		"object-curly-spacing": [
+			"error",
+			"always",
+			{
+				"arraysInObjects": true,
+				"objectsInObjects": true
+			}
+		],
+		"one-var": [
+			"error",
+			"never"
+		],
+		"radix": "error",
+		"space-before-blocks": "error",
+		"use-isnan": "error"
+	}
+}

@@ -1,21 +1,26 @@
 /*
-Copyright 2020 Dynatrace LLC
+	Copyright 2020 Dynatrace LLC
 
-Licensed under the Apache License, Version 2.0(the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
 
-http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
 */
 
 import { hrTimeToMilliseconds } from "@opentelemetry/core";
-import { AggregatorKind, MetricKind, MetricRecord, Point } from "@opentelemetry/metrics";
+import {
+	AggregatorKind,
+	MetricKind,
+	MetricRecord,
+	Point
+} from "@opentelemetry/metrics";
 
 /**
  * Metric keys must start with a lowercase letter
@@ -24,91 +29,97 @@ import { AggregatorKind, MetricKind, MetricRecord, Point } from "@opentelemetry/
 const cKeyValidationRegex = /^[a-z][a-zA-Z0-9_-]+/;
 const cInvalidKeyCharacters = /[^a-zA-Z0-9_-]/g;
 
-export function serializeMetrics(metrics: MetricRecord[], userTags: string, prefix: string) {
-    console.log('serializing')
-    try {
-        return metrics.map((metric) => ({
-            metricKey: formatMetricKey(metric, prefix),
-            dimensions: formatDimensions(metric, userTags),
-            valueLine: formatValueLine(metric),
-        }))
-            .filter(k => k.valueLine)
-            .map(({ metricKey, dimensions, valueLine }) => `${metricKey},${dimensions} ${valueLine}`)
-            .join("\n")
-    } catch (err) {
-        console.error(err);
-        throw err;
-    }
+export function serializeMetrics(
+	metrics: MetricRecord[],
+	userTags: string,
+	prefix: string
+): string {
+	return metrics
+		.map((metric) => ({
+			metricKey: formatMetricKey(metric, prefix),
+			dimensions: formatDimensions(metric, userTags),
+			valueLine: formatValueLine(metric)
+		}))
+		.filter((k) => k.valueLine)
+		.map(
+			({ metricKey, dimensions, valueLine }) =>
+				`${metricKey},${dimensions} ${valueLine}`
+		)
+		.join("\n");
 }
 
 function formatMetricKey(metric: MetricRecord, prefix: string) {
-    return sanitizeMetricKey(prefix ? `${prefix}.${metric.descriptor.name}` : metric.descriptor.name);
+	return sanitizeMetricKey(
+		prefix ? `${prefix}.${metric.descriptor.name}` : metric.descriptor.name
+	);
 }
 
 // Todo add tags
 function formatDimensions(metric: MetricRecord, userTags: string) {
-    const dimensions = Object.entries(metric.labels).map(([k, v]) => `${k}=${v}`);
+	const dimensions = Object.entries(metric.labels).map(([k, v]) => `${k}=${v}`);
 
-    if (userTags) {
-        dimensions.unshift(userTags);
-    }
+	if (userTags) {
+		dimensions.unshift(userTags);
+	}
 
-    return dimensions.join(",")
+	return dimensions.join(",");
 }
 
 function formatValueLine(metric: MetricRecord): string | null {
-    switch (metric.aggregator.kind) {
-        case AggregatorKind.SUM: {
-            const data = metric.aggregator.toPoint();
+	switch (metric.aggregator.kind) {
+		case AggregatorKind.SUM: {
+			const data = metric.aggregator.toPoint();
 
-            if (metric.descriptor.metricKind === MetricKind.COUNTER || metric.descriptor.metricKind === MetricKind.SUM_OBSERVER) {
-                return formatCount(data);
-            }
-            return formatGauge(data);
-        }
-        case AggregatorKind.HISTOGRAM: {
-            // this._logger.debug('HISTOGRAM is not implemented');
-            break;
-        }
-        case AggregatorKind.LAST_VALUE: {
-            // this._logger.debug('LAST_VALUE is not implemented');
-            break;
-        }
-    }
+			if (
+				metric.descriptor.metricKind === MetricKind.COUNTER ||
+				metric.descriptor.metricKind === MetricKind.SUM_OBSERVER
+			) {
+				return formatCount(data);
+			}
+			return formatGauge(data);
+		}
+		case AggregatorKind.HISTOGRAM: {
+			// this._logger.debug('HISTOGRAM is not implemented');
+			break;
+		}
+		case AggregatorKind.LAST_VALUE: {
+			// this._logger.debug('LAST_VALUE is not implemented');
+			break;
+		}
+	}
 
-    return null;
+	return null;
 }
 
 function sanitizeMetricKey(key: string): string {
-    if (cKeyValidationRegex.test(key)) {
-        // key is already valid
-        return key;
-    }
+	if (cKeyValidationRegex.test(key)) {
+		// key is already valid
+		return key;
+	}
 
-    // Allowed characters are lowercase and uppercase letters, numbers,
-    // hyphens (-), and underscores (_). Special letters (like ö) are not allowed.
+	// Allowed characters are lowercase and uppercase letters, numbers,
+	// hyphens (-), and underscores (_). Special letters (like ö) are not allowed.
 
-    // Replace invalid characters with underscores
-    key = key.replace(cInvalidKeyCharacters, "_");
+	// Replace invalid characters with underscores
+	key = key.replace(cInvalidKeyCharacters, "_");
 
-    // Must start with a lowercase letter
-    const first = key.charAt(0);
-    if (/[a-z]/.test(first)) {
-        return key;
-    }
+	// Must start with a lowercase letter
+	const first = key.charAt(0);
+	if (/[a-z]/.test(first)) {
+		return key;
+	}
 
-    if (/[A-Z]/.test(first)) {
-        return first.toLowerCase() + key.slice(1);
-    }
+	if (/[A-Z]/.test(first)) {
+		return first.toLowerCase() + key.slice(1);
+	}
 
-    return `a${key}`;
+	return `a${key}`;
 }
 
-
 function formatCount(point: Point<number>) {
-    return `count,delta=${point.value} ${hrTimeToMilliseconds(point.timestamp)}`;
+	return `count,delta=${point.value} ${hrTimeToMilliseconds(point.timestamp)}`;
 }
 
 function formatGauge(point: Point<number>) {
-    return `gauge,${point.value} ${hrTimeToMilliseconds(point.timestamp)}`;
+	return `gauge,${point.value} ${hrTimeToMilliseconds(point.timestamp)}`;
 }
