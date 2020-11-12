@@ -117,5 +117,11 @@ function formatGauge(point: Point<number>) {
 }
 
 function formatHistogram(point: Point<Histogram>) {
-	return `gauge,sum=${point.value.sum},count=${point.value.count} ${hrTimeToMilliseconds(point.timestamp)}`;
+	if (point.value.count === 0) {
+		return null;
+	}
+
+	// TODO remove this hack which pretends all data points had the same value
+	const avg = point.value.sum / point.value.count;
+	return `gauge,min=${avg},max=${avg},sum=${point.value.sum},count=${point.value.count} ${hrTimeToMilliseconds(point.timestamp)}`;
 }
