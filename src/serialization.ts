@@ -17,6 +17,7 @@
 import { hrTimeToMilliseconds } from "@opentelemetry/core";
 import {
 	AggregatorKind,
+	Histogram,
 	MetricKind,
 	MetricRecord,
 	Point
@@ -72,8 +73,8 @@ function formatValueLine(metric: MetricRecord): string | null {
 			return formatCount(data);
 		}
 		case AggregatorKind.HISTOGRAM: {
-			// this._logger.debug('HISTOGRAM is not implemented');
-			break;
+			const data = metric.aggregator.toPoint();
+			return formatHistogram(data);
 		}
 		case AggregatorKind.LAST_VALUE: {
 			const data = metric.aggregator.toPoint();
@@ -81,7 +82,6 @@ function formatValueLine(metric: MetricRecord): string | null {
 		}
 	}
 
-	return null;
 }
 
 function sanitizeMetricKey(key: string): string {
@@ -115,4 +115,8 @@ function formatCount(point: Point<number>) {
 
 function formatGauge(point: Point<number>) {
 	return `gauge,${point.value} ${hrTimeToMilliseconds(point.timestamp)}`;
+}
+
+function formatHistogram(point: Point<Histogram>) {
+	return `gauge,sum=${point.value.sum},count=${point.value.count} ${hrTimeToMilliseconds(point.timestamp)}`;
 }
