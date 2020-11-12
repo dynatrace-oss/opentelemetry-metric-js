@@ -83,6 +83,11 @@ export class DynatraceMetricExporter implements MetricExporter {
 
 		const payload = serializeMetrics(metrics, this._userTags, this._prefix);
 
+		if (!payload) {
+			process.nextTick(resultCallback, ExportResult.SUCCESS);
+			return;
+		}
+
 		const request = this._httpRequest(this._reqOpts);
 		const self = this;
 

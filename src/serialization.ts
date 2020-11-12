@@ -69,22 +69,15 @@ function formatValueLine(metric: MetricRecord): string | null {
 	switch (metric.aggregator.kind) {
 		case AggregatorKind.SUM: {
 			const data = metric.aggregator.toPoint();
-
-			if (
-				metric.descriptor.metricKind === MetricKind.COUNTER ||
-				metric.descriptor.metricKind === MetricKind.SUM_OBSERVER
-			) {
-				return formatCount(data);
-			}
-			return formatGauge(data);
+			return formatCount(data);
 		}
 		case AggregatorKind.HISTOGRAM: {
 			// this._logger.debug('HISTOGRAM is not implemented');
 			break;
 		}
 		case AggregatorKind.LAST_VALUE: {
-			// this._logger.debug('LAST_VALUE is not implemented');
-			break;
+			const data = metric.aggregator.toPoint();
+			return formatGauge(data);
 		}
 	}
 
