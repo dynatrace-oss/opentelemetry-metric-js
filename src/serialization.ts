@@ -18,7 +18,6 @@ import { hrTimeToMilliseconds } from "@opentelemetry/core";
 import {
 	AggregatorKind,
 	Histogram,
-	MetricKind,
 	MetricRecord,
 	Point
 } from "@opentelemetry/metrics";
