@@ -10,9 +10,9 @@ See [open-telemetry/opentelemetry-js](https://github.com/open-telemetry/opentele
 
 ## Getting started
 
-The general setup of OpenTelemetry JS is explained in the official [Getting Started Guide](https://github.com/open-telemetry/opentelemetry-js/blob/v0.12.0/getting-started/README.md).
+The general setup of OpenTelemetry JS is explained in the official [Getting Started Guide](https://github.com/open-telemetry/opentelemetry-js/blob/master/getting-started/README.md).
 
-Using the Metrics API is explained in the [Monitor Your NodeJS Application section](https://github.com/open-telemetry/opentelemetry-js/blob/v0.12.0/getting-started/README.md#monitor-your-nodejs-application).
+Using the Metrics API is explained in the [Monitor Your NodeJS Application section](https://github.com/open-telemetry/opentelemetry-js/blob/master/getting-started/README.md#monitor-your-nodejs-application).
 
 The Dynatrace exporter is added and set up like this:
 
