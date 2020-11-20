@@ -1,12 +1,9 @@
 {
   "name": "@dynatrace/opentelemetry-exporter-metrics",
-  "version": "0.0.1",
+  "version": "0.1.0-beta",
   "description": "OpenTelemetry metrics exporter for Dynatrace",
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
-  "directories": {
-    "example": "example"
-  },
   "scripts": {
     "test": "jest",
     "compile": "tsc",
@@ -45,7 +42,10 @@
   },
   "files": [
     "build/**/*.js",
+    "!build/**/*.spec.js",
     "build/**/*.d.ts",
-    "build/**/*.js.map"
+    "!build/**/*.spec.d.ts",
+    "build/**/*.js.map",
+    "!build/**/*.spec.js.map"
   ]
 }
