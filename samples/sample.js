@@ -8,6 +8,7 @@ const exporter = new DynatraceMetricExporter({
   prefix: 'sample',
   url: config.url,
   APIToken: config.APIToken,
+  logger: console
 });
 
 const meter = new MeterProvider({

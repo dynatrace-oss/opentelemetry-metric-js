@@ -23,4 +23,22 @@ describe("MetricExporter", () => {
 		expect(exporter["_reqOpts"].port).toEqual("14499");
 		expect(exporter["_reqOpts"].path).toEqual("/metrics/ingest");
 	});
+
+	test("should have a configurable url", () => {
+		let exporter = new DynatraceMetricExporter({
+			url: "https://example.com:8443/metrics"
+		});
+		expect(exporter["_reqOpts"].hostname).toEqual("example.com");
+		expect(exporter["_reqOpts"].port).toEqual("8443");
+		expect(exporter["_reqOpts"].path).toEqual("/metrics");
+		expect(exporter["_reqOpts"].protocol).toEqual("https:");
+
+		exporter = new DynatraceMetricExporter({
+			url: "http://example.com:8080/metrics"
+		});
+		expect(exporter["_reqOpts"].hostname).toEqual("example.com");
+		expect(exporter["_reqOpts"].port).toEqual("8080");
+		expect(exporter["_reqOpts"].path).toEqual("/metrics");
+		expect(exporter["_reqOpts"].protocol).toEqual("http:");
+	});
 });

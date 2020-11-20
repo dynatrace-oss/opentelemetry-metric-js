@@ -9,7 +9,9 @@
     "compile": "tsc",
     "clean": "rimraf build",
     "prepare": "npm run clean && npm run compile",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "lint:md": "markdownlint -i node_modules **/*.md",
+    "check": "npm run prepare && npm run lint && npm run lint:md && npm t"
   },
   "repository": {
     "type": "git",

@@ -57,6 +57,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 		this._reqOpts = {
 			method: "POST",
 			hostname: urlObj.hostname,
+			protocol: urlObj.protocol,
 			port: urlObj.port,
 			path: urlObj.pathname,
 			agent: new proto.Agent({
