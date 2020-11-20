@@ -1,9 +1,12 @@
 {
   "name": "@dynatrace/opentelemetry-exporter-metrics",
-  "version": "0.1.0-beta",
   "description": "OpenTelemetry metrics exporter for Dynatrace",
+  "version": "0.1.0-beta",
   "author": "Dynatrace",
   "license": "Apache-2",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
   "scripts": {
