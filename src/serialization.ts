@@ -22,13 +22,6 @@ import {
 	Point
 } from "@opentelemetry/metrics";
 
-/**
- * Metric keys must start with a lowercase letter
- * and contain letters, numbers, hyphens, and underscores.
- */
-const cKeyValidationRegex = /^[a-z][a-zA-Z0-9_-]+/;
-const cInvalidKeyCharacters = /[^a-zA-Z0-9_-]/g;
-
 export function serializeMetrics(
 	metrics: MetricRecord[],
 	userTags: string,
@@ -40,29 +33,91 @@ export function serializeMetrics(
 			dimensions: formatDimensions(metric, userTags),
 			valueLine: formatValueLine(metric)
 		}))
-		.filter((k) => k.valueLine)
+		.filter((k) => k.metricKey && k.valueLine)
 		.map(
 			({ metricKey, dimensions, valueLine }) =>
-				`${metricKey},${dimensions} ${valueLine}`
+				joinLine(metricKey!, dimensions, valueLine!)
 		)
 		.join("\n");
 }
 
 function formatMetricKey(metric: MetricRecord, prefix: string) {
-	return sanitizeMetricKey(
+	return normalizeMetricName(
 		prefix ? `${prefix}.${metric.descriptor.name}` : metric.descriptor.name
 	);
 }
 
-// Todo add tags
+function joinLine(metricKey: string, dimensions: string, valueLine: string): string {
+	let out = metricKey;
+	if (dimensions) {
+		out += `,${dimensions}`;
+	}
+	out += ` ${valueLine}`;
+
+	return out;
+}
+
 function formatDimensions(metric: MetricRecord, userTags: string) {
-	const dimensions = Object.entries(metric.labels).map(([k, v]) => `${k}=${v}`);
+	const dimensions = Object
+		.entries(metric.labels)
+		.map(([k, v]) => [normalizeDimensionKey(k), v])
+		.filter(([k]) => Boolean(k))
+		.map(([k, v]) => `${k}=${v}`);
 
 	if (userTags) {
 		dimensions.unshift(userTags);
 	}
 
 	return dimensions.join(",");
+}
+
+export function normalizeDimensionKey(key: string): string {
+	return key
+		.slice(0, 100)
+		.toLowerCase()
+		.split(".")
+		.map(normalizeDimensionKeySection)
+		.filter(Boolean)
+		.join(".");
+}
+
+function normalizeDimensionKeySection(section: string) {
+	return section
+		.replace(/^[^a-z]+/g, "")
+		.replace(/[^a-z0-9_\-:]+/g, "_");
+}
+
+export function normalizeMetricName(name: string): string | null {
+	/*
+	* identifier : first_identifier_section ( '.' identifier_section )*
+	* first_identifier_section : ( [a-z] | [A-Z] ) ( [a-z] | [A-Z] | [0-9] | [_-] )*
+	* identifier_section: ( [a-z] | [A-Z] | [0-9] ) ( [a-z] | [A-Z] | [0-9] | [_-] )*
+	*/
+
+	const sections = name.slice(0, 250).split(".");
+	const first = normalizeMetricNameFirstSection(sections.shift());
+	if (!first) {
+		return null;
+	}
+
+	return [
+		first,
+		...sections
+			.map(normalizeMetricNameSection)
+			.filter(Boolean)
+	].join(".");
+
+}
+
+function normalizeMetricNameFirstSection(section = ""): string {
+	// First section must start with a letter
+	return normalizeMetricNameSection(section.replace(/^[^a-zA-Z]+/g, ""));
+}
+
+function normalizeMetricNameSection(section: string): string {
+	return section
+		.replace(/^[^a-zA-Z0-9]+/g, "")
+		.replace(/[^a-zA-Z0-9_-]+/g, "_");
 }
 
 function formatValueLine(metric: MetricRecord): string | null {
@@ -83,33 +138,8 @@ function formatValueLine(metric: MetricRecord): string | null {
 
 }
 
-function sanitizeMetricKey(key: string): string {
-	if (cKeyValidationRegex.test(key)) {
-		// key is already valid
-		return key;
-	}
-
-	// Allowed characters are lowercase and uppercase letters, numbers,
-	// hyphens (-), and underscores (_). Special letters (like ö) are not allowed.
-
-	// Replace invalid characters with underscores
-	key = key.replace(cInvalidKeyCharacters, "_");
-
-	// Must start with a lowercase letter
-	const first = key.charAt(0);
-	if (/[a-z]/.test(first)) {
-		return key;
-	}
-
-	if (/[A-Z]/.test(first)) {
-		return first.toLowerCase() + key.slice(1);
-	}
-
-	return `a${key}`;
-}
-
 function formatCount(point: Point<number>) {
-	return `count,delta=${point.value} ${hrTimeToMilliseconds(point.timestamp)}`;
+	return `count,${point.value} ${hrTimeToMilliseconds(point.timestamp)}`;
 }
 
 function formatGauge(point: Point<number>) {
