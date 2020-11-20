@@ -2,6 +2,8 @@
   "name": "@dynatrace/opentelemetry-exporter-metrics",
   "version": "0.1.0-beta",
   "description": "OpenTelemetry metrics exporter for Dynatrace",
+  "author": "Dynatrace",
+  "license": "Apache-2",
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
   "scripts": {
@@ -17,8 +19,6 @@
     "type": "git",
     "url": "git+https://github.com/dynatrace-oss/opentelemetry-metrics-js.git"
   },
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/dynatrace-oss/opentelemetry-metrics-js/issues"
   },
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/jest": "^26.0.15",
-    "@types/node": "^14.14.6",
+    "@types/node": "^14.14.9",
     "@typescript-eslint/eslint-plugin": "^4.8.1",
     "@typescript-eslint/parser": "^4.8.1",
     "eslint": "^7.13.0",

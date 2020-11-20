@@ -5,8 +5,15 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [8, 10, 12, 14]
 
     steps:
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+
       - uses: actions/checkout@v2
 
       - name: Install
