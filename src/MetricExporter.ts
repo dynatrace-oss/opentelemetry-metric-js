@@ -15,7 +15,7 @@
 */
 
 import * as api from "@opentelemetry/api";
-import { ExportResult, NoopLogger } from "@opentelemetry/core";
+import { ExportResult, ExportResultCode, NoopLogger } from "@opentelemetry/core";
 import { MetricExporter, MetricRecord } from "@opentelemetry/metrics";
 import * as http from "http";
 import * as https from "https";
@@ -73,19 +73,19 @@ export class DynatraceMetricExporter implements MetricExporter {
 		resultCallback: (result: ExportResult) => void
 	): void {
 		if (metrics.length === 0) {
-			process.nextTick(resultCallback, ExportResult.SUCCESS);
+			process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
 			return;
 		}
 
 		if (this._isShutdown) {
-			process.nextTick(resultCallback, ExportResult.FAILED_NOT_RETRYABLE);
+			process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
 			return;
 		}
 
 		const payload = serializeMetrics(metrics, this._userTags, this._prefix);
 
 		if (!payload) {
-			process.nextTick(resultCallback, ExportResult.SUCCESS);
+			process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
 			return;
 		}
 
@@ -108,24 +108,24 @@ export class DynatraceMetricExporter implements MetricExporter {
 				res.statusCode >= 200 &&
 				res.statusCode < 300
 			) {
-				process.nextTick(resultCallback, ExportResult.SUCCESS);
+				process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
 			} else if (res.statusCode === 401 || res.statusCode === 403) {
 				self._logger.warn("Not authorized to send spans to Dynatrace");
 				// 401/403 is permanent
 				self._isShutdown = true;
-				process.nextTick(resultCallback, ExportResult.FAILED_NOT_RETRYABLE);
+				process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
 			} else {
 				self._logger.warn(
 					`Received status code ${res.statusCode} from Dynatrace`
 				);
-				process.nextTick(resultCallback, ExportResult.FAILED_RETRYABLE);
+				process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
 			}
 		}
 
 		function onError(err: Error) {
 			// TODO
 			self._logger.error(err.message);
-			process.nextTick(resultCallback, ExportResult.FAILED_NOT_RETRYABLE);
+			process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
 			return;
 		}
 
