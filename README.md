@@ -26,7 +26,7 @@ The Dynatrace OpenTelemetry exporter requires the following prerequisites:
 - [Node.js 8+](https://nodejs.org/en/)
 - NPM (6+ recommended, included with Node.js)
 
-```
+```sh
 # Optional - update NPM
 npm install --global npm
 
