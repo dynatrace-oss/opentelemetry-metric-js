@@ -19,6 +19,26 @@ The general setup of OpenTelemetry JS is explained in the official
 Using the Metrics API is explained in the
 [Monitor Your NodeJS Application section](https://github.com/open-telemetry/opentelemetry-js/blob/master/getting-started/README.md#monitor-your-nodejs-application).
 
+### Install Dependencies
+
+The Dynatrace OpenTelemetry exporter requires the following prerequisites:
+
+- [Node.js 8+](https://nodejs.org/en/)
+- NPM (6+ recommended, included with Node.js)
+
+```
+# Optional - update NPM
+npm install --global npm
+
+# Install the OpenTelemetry metrics SDK using NPM
+npm install @opentelemetry/metrics
+
+# Install the Dynatrace OpenTelemetry Metrics Exporter using NPM
+npm install @dynatrace/opentelemetry-exporter-metrics
+```
+
+### Initialize components
+
 The Dynatrace exporter is added and set-up like this:
 
 ```js
