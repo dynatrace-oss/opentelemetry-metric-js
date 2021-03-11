@@ -32,6 +32,9 @@
     "@opentelemetry/metrics": "^0.18.0"
   },
   "devDependencies": {
+    "@opentelemetry/api": "^0.18.1",
+    "@opentelemetry/core": "^0.18.0",
+    "@opentelemetry/metrics": "^0.18.0",
     "@types/jest": "^25.2.3",
     "@types/node": "^14.14.21",
     "@typescript-eslint/eslint-plugin": "^4.14.0",
