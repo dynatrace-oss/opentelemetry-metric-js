@@ -35,7 +35,11 @@ export class MetricFactory {
 	 */
 	constructor(options?: MetricFactoryOptions) {
 		this._prefix = options?.prefix;
-		this._defaultDimensions = normalizeDimensions(options?.defaultDimensions ?? []);
+		this._defaultDimensions = this._deduplicateDimensions(
+			normalizeDimensions(
+				options?.defaultDimensions ?? []
+			)
+		);
 	}
 
 	/**
@@ -127,6 +131,17 @@ export class MetricFactory {
 	 * Get dimension list including default dimensions
 	 */
 	private _getDimensions(dimensions: Dimension[]): Dimension[] {
-		return [...this._defaultDimensions, ...normalizeDimensions(dimensions)];
+		return this._deduplicateDimensions([...this._defaultDimensions, ...normalizeDimensions(dimensions)]);
+	}
+
+	private _deduplicateDimensions(dimensions: Dimension[]): Dimension[] {
+		const found = new Set<string>();
+		return dimensions.filter(d => {
+			if (found.has(d.key)) {
+				return false;
+			}
+			found.add(d.key);
+			return true;
+		});
 	}
 }

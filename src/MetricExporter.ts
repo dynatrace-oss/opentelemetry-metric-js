@@ -40,8 +40,10 @@ export class DynatraceMetricExporter implements MetricExporter {
    * @param config Exporter configuration
    */
 	constructor(config: ExporterConfig = {}) {
-		const defaultDimensions = config.defaultDimensions ?? [];
+		const defaultDimensions = config.defaultDimensions?.slice() ?? [];
 		const oneAgentMetadata = getOneAgentMetadata();
+
+		defaultDimensions.unshift({ key: "dt.metrics.source", value: "opentelemetry" });
 
 		this._dtMetricFactory = new MetricFactory({
 			prefix: config.prefix,
