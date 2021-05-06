@@ -14,12 +14,12 @@
 	limitations under the License.
 */
 
-import { DynatraceMetricExporter } from ".";
+import { DynatraceMetricExporter } from "../src";
 
 describe("MetricExporter", () => {
 	test("should default to oneagent endpoint", () => {
 		const exporter = new DynatraceMetricExporter();
-		expect(exporter["_reqOpts"].hostname).toEqual("127.0.0.1");
+		expect(exporter["_reqOpts"].hostname).toEqual("localhost");
 		expect(exporter["_reqOpts"].port).toEqual("14499");
 		expect(exporter["_reqOpts"].path).toEqual("/metrics/ingest");
 	});
