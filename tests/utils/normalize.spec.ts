@@ -176,7 +176,7 @@ describe("Normalization", () => {
 		expect(normalizeDimensionKey(Array(120).fill("a").join(""))).toEqual(Array(100).fill("a").join(""));
 	});
 
-	it('should normalize dimension values', () => {
+	it("should normalize dimension values", () => {
 		expect(normalizeDimensionValue("value")).toEqual("value");
 		expect(normalizeDimensionValue("")).toEqual(null);
 		expect(normalizeDimensionValue("VALUE")).toEqual("VALUE");
@@ -187,7 +187,7 @@ describe("Normalization", () => {
 		expect(normalizeDimensionValue("a=b")).toEqual("a\\=b");
 		expect(normalizeDimensionValue("a\\b")).toEqual("a\\\\b");
 		expect(normalizeDimensionValue(" ,=\\")).toEqual("\\ \\,\\=\\\\");
-		expect(normalizeDimensionValue(`"\\ ""`)).toEqual(`\\"\\\\\\ \\"\\"`);
+		expect(normalizeDimensionValue("\"\\ \"\"")).toEqual("\\\"\\\\\\ \\\"\\\"");
 		expect(normalizeDimensionValue("key=\"value\"")).toEqual("key\\=\\\"value\\\"");
 		expect(normalizeDimensionValue("\u0000a\u0007")).toEqual("a");
 		expect(normalizeDimensionValue("\u0000\u0007")).toEqual(null);
@@ -203,5 +203,5 @@ describe("Normalization", () => {
 		expect(normalizeDimensionValue("a\u0000\u0000\u0000b")).toEqual("a_b");
 		expect(normalizeDimensionValue(Array(270).fill("a").join(""))).toEqual(Array(250).fill("a").join(""));
 		expect(normalizeDimensionValue(Array(270).fill("=").join(""))).toEqual(Array(125).fill("\\=").join(""));
-	})
+	});
 });
