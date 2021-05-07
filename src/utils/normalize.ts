@@ -69,7 +69,11 @@ export function normalizeDimensionKey(key: string): string | null {
 }
 
 export function normalizeDimensionValue(value: string): string | null {
-	return joinAndTrimDimensionValue(escapeCharacters(removeControlCharacters(String(value))));
+	// in JS, we could receive an unexpected type
+	value = String(value);
+	value = removeControlCharacters(value);
+	const escapedCharList = escapeCharacters(value);
+	return joinAndTrimDimensionValue(escapedCharList);
 }
 
 export function normalizeDimensions(dimensions: Dimension[]): Dimension[] {
@@ -104,13 +108,16 @@ function escapeCharacters(s: string): string[] {
 function joinAndTrimDimensionValue(value: string[]): string | null {
 	let len = 0;
 
-	return value.filter(c => {
-		len += c.length;
-		if (len > DIMENSION_VALUE_MAX_LENGTH) {
-			return false;
-		}
-		return true;
-	}).join("") || null;
+	return value
+		// Slice first since we know we will never use more than this
+		.slice(0, DIMENSION_VALUE_MAX_LENGTH)
+		.filter(c => {
+			len += c.length;
+			if (len > DIMENSION_VALUE_MAX_LENGTH) {
+				return false;
+			}
+			return true;
+		}).join("") || null;
 }
 
 function normalizeMetricKeyFirstSection(section: string): string {
