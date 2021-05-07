@@ -120,8 +120,10 @@ function normalizeMetricKeyFirstSection(section: string): string {
 
 function normalizeMetricKeySection(section: string): string {
 	return section
+		// Remove this to allow underscores at the start
 		.replace(/^[^a-zA-Z0-9_:-]+/, "")
-		// .replace(/[^a-zA-Z0-9_:-]+$/, "")
+		// Remove this to allow underscores at the end
+		.replace(/[^a-zA-Z0-9_:-]+$/, "")
 		.replace(/[^a-zA-Z0-9_:-]+/g, "_");
 }
 
