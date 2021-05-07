@@ -71,6 +71,7 @@ export function normalizeDimensionKey(key: string): string | null {
 export function normalizeDimensionValue(value: string): string | null {
 	// in JS, we could receive an unexpected type
 	value = String(value);
+	value = value.slice(0, DIMENSION_VALUE_MAX_LENGTH);
 	value = removeControlCharacters(value);
 	const escapedCharList = escapeCharacters(value);
 	return joinAndTrimDimensionValue(escapedCharList);
@@ -109,8 +110,6 @@ function joinAndTrimDimensionValue(value: string[]): string | null {
 	let len = 0;
 
 	return value
-		// Slice first since we know we will never use more than this
-		.slice(0, DIMENSION_VALUE_MAX_LENGTH)
 		.filter(c => {
 			len += c.length;
 			if (len > DIMENSION_VALUE_MAX_LENGTH) {
