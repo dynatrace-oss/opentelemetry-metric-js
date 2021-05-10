@@ -130,6 +130,23 @@ describe("MetricFactory", () => {
 		expect(summary?.serialize()).toEqual(`name,dim=value gauge,min=1,max=10,sum=34,count=42 ${now}`);
 	});
 
+	it("should normalize dimension keys", () => {
+		const dims = [
+			{ key: "dim", value: "value" },
+			{ key: "nörmalize", value: "value" }
+		];
+
+		const cnt = factory.createTotalCounter("name", dims, 25, now);
+		const dcnt = factory.createDeltaCounter("name", dims, 25, now);
+		const gauge = factory.createGauge("name", dims, 25, now);
+		const summary = factory.createSummary("name", dims, { min: 1, max: 10, sum: 34, count: 42 }, now);
+
+		expect(cnt?.serialize()).toEqual(`name,dim=value,n_rmalize=value count,25 ${now}`);
+		expect(dcnt?.serialize()).toEqual(`name,dim=value,n_rmalize=value count,delta=25 ${now}`);
+		expect(gauge?.serialize()).toEqual(`name,dim=value,n_rmalize=value gauge,25 ${now}`);
+		expect(summary?.serialize()).toEqual(`name,dim=value,n_rmalize=value gauge,min=1,max=10,sum=34,count=42 ${now}`);
+	});
+
 	it("should skip dimensions with invalid values", () => {
 		const dims = [
 			{ key: "dim", value: "value" },
@@ -145,6 +162,23 @@ describe("MetricFactory", () => {
 		expect(dcnt?.serialize()).toEqual(`name,dim=value count,delta=25 ${now}`);
 		expect(gauge?.serialize()).toEqual(`name,dim=value gauge,25 ${now}`);
 		expect(summary?.serialize()).toEqual(`name,dim=value gauge,min=1,max=10,sum=34,count=42 ${now}`);
+	});
+
+	it("should normalize and escape dimension values", () => {
+		const dims = [
+			{ key: "dim", value: "value" },
+			{ key: "dim2", value: "a\u0000\u0000\u0000b\"quoted\"" }
+		];
+
+		const cnt = factory.createTotalCounter("name", dims, 25, now);
+		const dcnt = factory.createDeltaCounter("name", dims, 25, now);
+		const gauge = factory.createGauge("name", dims, 25, now);
+		const summary = factory.createSummary("name", dims, { min: 1, max: 10, sum: 34, count: 42 }, now);
+
+		expect(cnt?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\" count,25 ${now}`);
+		expect(dcnt?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\" count,delta=25 ${now}`);
+		expect(gauge?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\" gauge,25 ${now}`);
+		expect(summary?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\" gauge,min=1,max=10,sum=34,count=42 ${now}`);
 	});
 
 	describe("with prefix", () => {
