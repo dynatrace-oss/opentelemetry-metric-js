@@ -97,13 +97,13 @@ export class DynatraceMetricExporter implements MetricExporter {
 		//
 		// If a single batch fails, the entire batch will be considered a failure.
 		if (metrics.length > getPayloadLinesLimit()) {
-			return this.export(metrics.slice(0, 1000), (result) => {
+			return this.export(metrics.slice(0, getPayloadLinesLimit()), (result) => {
 				if (result.code !== ExportResultCode.SUCCESS) {
 					resultCallback(result);
 					return;
 				}
 
-				this.export(metrics.slice(1000), resultCallback);
+				this.export(metrics.slice(getPayloadLinesLimit()), resultCallback);
 			});
 		}
 
