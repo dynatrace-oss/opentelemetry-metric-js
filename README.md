@@ -76,6 +76,11 @@ setInterval(() => {
 }, 1000);
 ```
 
+If a batching processor is used, a batch size of 1000 or less is recommended.
+If a batch larger than 1000 metrics is exported, it will be exported using
+multiple requests. If any request fails, the entire batch will be considered
+to have failed.
+
 A full setup is provided in our [example project](samples/).
 
 ### Configuration

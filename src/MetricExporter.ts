@@ -90,6 +90,23 @@ export class DynatraceMetricExporter implements MetricExporter {
 			return;
 		}
 
+		// If the batch has more than 1000 metrics, export them in multiple
+		// batches serially. There is no advantage of parallelizing since
+		// the CPU work is single threaded anyway and there is only a single
+		// connection to the server.
+		//
+		// If a single batch fails, the entire batch will be considered a failure.
+		if (metrics.length > getPayloadLinesLimit()) {
+			return this.export(metrics.slice(0, 1000), (result) => {
+				if (result.code !== ExportResultCode.SUCCESS) {
+					resultCallback(result);
+					return;
+				}
+
+				this.export(metrics.slice(1000), resultCallback);
+			});
+		}
+
 		const dtMetrics = metrics.map((metric) => {
 			const dimensions = Object.entries(metric.labels).map(([key, value]) => ({ key, value }));
 			switch (metric.aggregator.kind) {
@@ -151,7 +168,6 @@ export class DynatraceMetricExporter implements MetricExporter {
 
 		const lines = dtMetrics
 			.filter((m): m is Metric => m != null)
-			.slice(0, getPayloadLinesLimit())
 			.map(m => m.serialize());
 
 		if (lines.length === 0) {
