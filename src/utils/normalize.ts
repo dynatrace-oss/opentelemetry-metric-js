@@ -73,8 +73,9 @@ export function normalizeDimensionValue(value: string): string | null {
 	value = String(value);
 	value = value.slice(0, DIMENSION_VALUE_MAX_LENGTH);
 	value = removeControlCharacters(value);
-	const escapedCharList = escapeCharacters(value);
-	return joinAndTrimDimensionValue(escapedCharList);
+	value = escapeCharacters(value);
+	value = value.slice(0, DIMENSION_VALUE_MAX_LENGTH);
+	return ensureValidTrailingSlashes(value) || null;
 }
 
 export function normalizeDimensions(dimensions: Dimension[]): Dimension[] {
@@ -102,21 +103,21 @@ function removeControlCharacters(s: string): string {
 	return s;
 }
 
-function escapeCharacters(s: string): string[] {
-	return s.split("").map(c => CHARS_TO_ESCAPE.has(c) ? `\\${c}` : c);
+function escapeCharacters(s: string): string {
+	return s.split("").map(c => CHARS_TO_ESCAPE.has(c) ? `\\${c}` : c).join("");
 }
 
-function joinAndTrimDimensionValue(value: string[]): string | null {
-	let len = 0;
+function ensureValidTrailingSlashes(s: string): string {
+	const trailingSlashesMatch = /\\+$/.exec(s);
+	if (trailingSlashesMatch == null) {
+		return s;
+	}
 
-	return value
-		.filter(c => {
-			len += c.length;
-			if (len > DIMENSION_VALUE_MAX_LENGTH) {
-				return false;
-			}
-			return true;
-		}).join("") || null;
+	// An odd number of trailing slashes indicates an invalid escape sequence after trim
+	// if there is an odd number of trailing slashes, trim the last one
+	return trailingSlashesMatch[0].length % 2 === 0 ?
+		s :
+		s.slice(0, s.length - 1);
 }
 
 function normalizeMetricKeyFirstSection(section: string): string {
