@@ -55,7 +55,8 @@ export class DynatraceMetricExporter implements MetricExporter {
 		this._httpRequest = proto.request;
 
 		const headers: Record<string, string> = {
-			"Content-Type": "text/plain; charset=utf-8"
+			"Content-Type": "text/plain; charset=utf-8",
+			"User-Agent": "opentelemetry-metric-js"
 		};
 
 		if (config.APIToken) {
