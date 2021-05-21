@@ -51,10 +51,10 @@ describe("MetricFactory", () => {
 		const gauge = factory.createGauge("name", [], 25, now);
 		const summary = factory.createSummary("name", [], { min: 1, max: 10, sum: 34, count: 42 }, now);
 
-		expect(cnt?.serialize()).toEqual(`name count,25 ${now}`);
-		expect(dcnt?.serialize()).toEqual(`name count,delta=25 ${now}`);
-		expect(gauge?.serialize()).toEqual(`name gauge,25 ${now}`);
-		expect(summary?.serialize()).toEqual(`name gauge,min=1,max=10,sum=34,count=42 ${now}`);
+		expect(cnt?.serialize()).toEqual(`name,dt.metrics.source=opentelemetry count,25 ${now}`);
+		expect(dcnt?.serialize()).toEqual(`name,dt.metrics.source=opentelemetry count,delta=25 ${now}`);
+		expect(gauge?.serialize()).toEqual(`name,dt.metrics.source=opentelemetry gauge,25 ${now}`);
+		expect(summary?.serialize()).toEqual(`name,dt.metrics.source=opentelemetry gauge,min=1,max=10,sum=34,count=42 ${now}`);
 	});
 
 	it("should serialize metrics without timestamps", () => {
@@ -63,10 +63,10 @@ describe("MetricFactory", () => {
 		const gauge = factory.createGauge("name", [], 25);
 		const summary = factory.createSummary("name", [], { min: 1, max: 10, sum: 34, count: 42 });
 
-		expect(cnt?.serialize()).toEqual("name count,25");
-		expect(dcnt?.serialize()).toEqual("name count,delta=25");
-		expect(gauge?.serialize()).toEqual("name gauge,25");
-		expect(summary?.serialize()).toEqual("name gauge,min=1,max=10,sum=34,count=42");
+		expect(cnt?.serialize()).toEqual("name,dt.metrics.source=opentelemetry count,25");
+		expect(dcnt?.serialize()).toEqual("name,dt.metrics.source=opentelemetry count,delta=25");
+		expect(gauge?.serialize()).toEqual("name,dt.metrics.source=opentelemetry gauge,25");
+		expect(summary?.serialize()).toEqual("name,dt.metrics.source=opentelemetry gauge,min=1,max=10,sum=34,count=42");
 	});
 
 	it("should not create metrics with invalid names", () => {
@@ -107,10 +107,10 @@ describe("MetricFactory", () => {
 		const gauge = factory.createGauge("name", dims, 25, now);
 		const summary = factory.createSummary("name", dims, { min: 1, max: 10, sum: 34, count: 42 }, now);
 
-		expect(cnt?.serialize()).toEqual(`name,dim=value count,25 ${now}`);
-		expect(dcnt?.serialize()).toEqual(`name,dim=value count,delta=25 ${now}`);
-		expect(gauge?.serialize()).toEqual(`name,dim=value gauge,25 ${now}`);
-		expect(summary?.serialize()).toEqual(`name,dim=value gauge,min=1,max=10,sum=34,count=42 ${now}`);
+		expect(cnt?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry count,25 ${now}`);
+		expect(dcnt?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry count,delta=25 ${now}`);
+		expect(gauge?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry gauge,25 ${now}`);
+		expect(summary?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry gauge,min=1,max=10,sum=34,count=42 ${now}`);
 	});
 
 	it("should skip dimensions with invalid keys", () => {
@@ -124,10 +124,10 @@ describe("MetricFactory", () => {
 		const gauge = factory.createGauge("name", dims, 25, now);
 		const summary = factory.createSummary("name", dims, { min: 1, max: 10, sum: 34, count: 42 }, now);
 
-		expect(cnt?.serialize()).toEqual(`name,dim=value count,25 ${now}`);
-		expect(dcnt?.serialize()).toEqual(`name,dim=value count,delta=25 ${now}`);
-		expect(gauge?.serialize()).toEqual(`name,dim=value gauge,25 ${now}`);
-		expect(summary?.serialize()).toEqual(`name,dim=value gauge,min=1,max=10,sum=34,count=42 ${now}`);
+		expect(cnt?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry count,25 ${now}`);
+		expect(dcnt?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry count,delta=25 ${now}`);
+		expect(gauge?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry gauge,25 ${now}`);
+		expect(summary?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry gauge,min=1,max=10,sum=34,count=42 ${now}`);
 	});
 
 	it("should normalize dimension keys", () => {
@@ -141,10 +141,10 @@ describe("MetricFactory", () => {
 		const gauge = factory.createGauge("name", dims, 25, now);
 		const summary = factory.createSummary("name", dims, { min: 1, max: 10, sum: 34, count: 42 }, now);
 
-		expect(cnt?.serialize()).toEqual(`name,dim=value,n_rmalize=value count,25 ${now}`);
-		expect(dcnt?.serialize()).toEqual(`name,dim=value,n_rmalize=value count,delta=25 ${now}`);
-		expect(gauge?.serialize()).toEqual(`name,dim=value,n_rmalize=value gauge,25 ${now}`);
-		expect(summary?.serialize()).toEqual(`name,dim=value,n_rmalize=value gauge,min=1,max=10,sum=34,count=42 ${now}`);
+		expect(cnt?.serialize()).toEqual(`name,dim=value,n_rmalize=value,dt.metrics.source=opentelemetry count,25 ${now}`);
+		expect(dcnt?.serialize()).toEqual(`name,dim=value,n_rmalize=value,dt.metrics.source=opentelemetry count,delta=25 ${now}`);
+		expect(gauge?.serialize()).toEqual(`name,dim=value,n_rmalize=value,dt.metrics.source=opentelemetry gauge,25 ${now}`);
+		expect(summary?.serialize()).toEqual(`name,dim=value,n_rmalize=value,dt.metrics.source=opentelemetry gauge,min=1,max=10,sum=34,count=42 ${now}`);
 	});
 
 	it("should skip dimensions with invalid values", () => {
@@ -158,10 +158,10 @@ describe("MetricFactory", () => {
 		const gauge = factory.createGauge("name", dims, 25, now);
 		const summary = factory.createSummary("name", dims, { min: 1, max: 10, sum: 34, count: 42 }, now);
 
-		expect(cnt?.serialize()).toEqual(`name,dim=value count,25 ${now}`);
-		expect(dcnt?.serialize()).toEqual(`name,dim=value count,delta=25 ${now}`);
-		expect(gauge?.serialize()).toEqual(`name,dim=value gauge,25 ${now}`);
-		expect(summary?.serialize()).toEqual(`name,dim=value gauge,min=1,max=10,sum=34,count=42 ${now}`);
+		expect(cnt?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry count,25 ${now}`);
+		expect(dcnt?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry count,delta=25 ${now}`);
+		expect(gauge?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry gauge,25 ${now}`);
+		expect(summary?.serialize()).toEqual(`name,dim=value,dt.metrics.source=opentelemetry gauge,min=1,max=10,sum=34,count=42 ${now}`);
 	});
 
 	it("should normalize and escape dimension values", () => {
@@ -175,10 +175,10 @@ describe("MetricFactory", () => {
 		const gauge = factory.createGauge("name", dims, 25, now);
 		const summary = factory.createSummary("name", dims, { min: 1, max: 10, sum: 34, count: 42 }, now);
 
-		expect(cnt?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\" count,25 ${now}`);
-		expect(dcnt?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\" count,delta=25 ${now}`);
-		expect(gauge?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\" gauge,25 ${now}`);
-		expect(summary?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\" gauge,min=1,max=10,sum=34,count=42 ${now}`);
+		expect(cnt?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\",dt.metrics.source=opentelemetry count,25 ${now}`);
+		expect(dcnt?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\",dt.metrics.source=opentelemetry count,delta=25 ${now}`);
+		expect(gauge?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\",dt.metrics.source=opentelemetry gauge,25 ${now}`);
+		expect(summary?.serialize()).toEqual(`name,dim=value,dim2=a_b\\"quoted\\",dt.metrics.source=opentelemetry gauge,min=1,max=10,sum=34,count=42 ${now}`);
 	});
 
 	describe("with prefix", () => {
@@ -192,10 +192,10 @@ describe("MetricFactory", () => {
 			const gauge = factory.createGauge("name", [], 25, now);
 			const summary = factory.createSummary("name", [], { min: 1, max: 10, sum: 34, count: 42 }, now);
 
-			expect(cnt?.serialize()).toEqual(`prefix.name count,25 ${now}`);
-			expect(dcnt?.serialize()).toEqual(`prefix.name count,delta=25 ${now}`);
-			expect(gauge?.serialize()).toEqual(`prefix.name gauge,25 ${now}`);
-			expect(summary?.serialize()).toEqual(`prefix.name gauge,min=1,max=10,sum=34,count=42 ${now}`);
+			expect(cnt?.serialize()).toEqual(`prefix.name,dt.metrics.source=opentelemetry count,25 ${now}`);
+			expect(dcnt?.serialize()).toEqual(`prefix.name,dt.metrics.source=opentelemetry count,delta=25 ${now}`);
+			expect(gauge?.serialize()).toEqual(`prefix.name,dt.metrics.source=opentelemetry gauge,25 ${now}`);
+			expect(summary?.serialize()).toEqual(`prefix.name,dt.metrics.source=opentelemetry gauge,min=1,max=10,sum=34,count=42 ${now}`);
 		});
 	});
 
@@ -210,10 +210,10 @@ describe("MetricFactory", () => {
 			const gauge = factory.createGauge("name", [], 25, now);
 			const summary = factory.createSummary("name", [], { min: 1, max: 10, sum: 34, count: 42 }, now);
 
-			expect(cnt?.serialize()).toEqual(`name,default=val count,25 ${now}`);
-			expect(dcnt?.serialize()).toEqual(`name,default=val count,delta=25 ${now}`);
-			expect(gauge?.serialize()).toEqual(`name,default=val gauge,25 ${now}`);
-			expect(summary?.serialize()).toEqual(`name,default=val gauge,min=1,max=10,sum=34,count=42 ${now}`);
+			expect(cnt?.serialize()).toEqual(`name,default=val,dt.metrics.source=opentelemetry count,25 ${now}`);
+			expect(dcnt?.serialize()).toEqual(`name,default=val,dt.metrics.source=opentelemetry count,delta=25 ${now}`);
+			expect(gauge?.serialize()).toEqual(`name,default=val,dt.metrics.source=opentelemetry gauge,25 ${now}`);
+			expect(summary?.serialize()).toEqual(`name,default=val,dt.metrics.source=opentelemetry gauge,min=1,max=10,sum=34,count=42 ${now}`);
 		});
 	});
 });

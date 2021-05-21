@@ -143,13 +143,12 @@ export class MetricFactory {
 	}
 
 	private _deduplicateDimensions(dimensions: Dimension[]): Dimension[] {
-		const found = new Set<string>();
-		return dimensions.filter(d => {
-			if (found.has(d.key)) {
-				return false;
-			}
-			found.add(d.key);
-			return true;
+		const found: Record<string, Dimension> = {};
+
+		dimensions.forEach(d => {
+			found[d.key] = d;
 		});
+
+		return Object.values(found);
 	}
 }
