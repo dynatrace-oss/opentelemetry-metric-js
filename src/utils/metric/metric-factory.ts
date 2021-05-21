@@ -24,11 +24,13 @@ export interface Metric {
 export interface MetricFactoryOptions {
 	prefix?: string;
 	defaultDimensions?: Dimension[];
+	oneAgentMetadata?: Dimension[];
 }
 
 export class MetricFactory {
 	private _prefix?: string;
 	private _defaultDimensions: Dimension[];
+	private _oneAgentMetadata: Dimension[];
 
 	/**
 	 * Return a new Metric Factory. If default dimensions are provided, they will be normalized.
@@ -40,6 +42,7 @@ export class MetricFactory {
 				options?.defaultDimensions ?? []
 			)
 		);
+		this._oneAgentMetadata = options?.oneAgentMetadata ?? [];
 	}
 
 	/**
@@ -131,7 +134,12 @@ export class MetricFactory {
 	 * Get dimension list including default dimensions
 	 */
 	private _getDimensions(dimensions: Dimension[]): Dimension[] {
-		return this._deduplicateDimensions([...this._defaultDimensions, ...normalizeDimensions(dimensions)]);
+		return this._deduplicateDimensions([
+			...this._defaultDimensions,
+			...normalizeDimensions(dimensions),
+			{ key: "dt.metrics.source", value: "opentelemetry" },
+			...this._oneAgentMetadata
+		]);
 	}
 
 	private _deduplicateDimensions(dimensions: Dimension[]): Dimension[] {
