@@ -53,6 +53,10 @@ const exporter = new DynatraceMetricExporter({
     url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
     APIToken: 'token123'’,
     prefix: 'MyPrefix', // optional
+    defaultDimensions: [ // optional
+      key: "default-dimension",
+      value: "with-value"
+    ]
 });
 
 const meter = new MeterProvider({
@@ -126,5 +130,5 @@ metric key, separated by a dot (`<prefix>.<namespace>.<name>`).
 
 #### Default Labels/Dimensions
 
-The `tags` parameter can be used to optionally specify a list of key/value
+The `defaultDimensions` parameter can be used to optionally specify a list of key/value
 pairs, which will be added as additional labels/dimensions to all data points.
