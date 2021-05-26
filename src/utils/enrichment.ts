@@ -30,11 +30,11 @@ function readOneAgentMetadata(filename: string): Record<string, string> {
 }
 
 /**
- * Return a list of dimensions from the oneagent to attach to every metric.
+ * Return a list of dimensions from the OneAgent to attach to every metric.
  * This function performs synchronous I/O so should only be called once
  * and cached if possible.
  *
- * @returns list of dimensions from oneagent
+ * @returns list of dimensions from OneAgent
  */
 export function getOneAgentMetadata(): Dimension[];
 export function getOneAgentMetadata(_testFilename?: string): Dimension[] {

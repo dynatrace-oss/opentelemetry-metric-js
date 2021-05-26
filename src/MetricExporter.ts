@@ -21,7 +21,7 @@ import * as http from "http";
 import * as https from "https";
 import * as url from "url";
 import { ExporterConfig } from "./types";
-import { getDefaultBaseUrl, getPayloadLinesLimit } from "./utils/constants";
+import { getDefaultOneAgentEndpoint, getPayloadLinesLimit } from "./utils/constants";
 import { getOneAgentMetadata } from "./utils/enrichment";
 import { Metric, SummaryValue } from "./utils/metric/metric";
 import { MetricFactory } from "./utils/metric/metric-factory";
@@ -49,7 +49,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 			oneAgentMetadata
 		});
 
-		const urlObj = new url.URL(config.url ?? getDefaultBaseUrl());
+		const urlObj = new url.URL(config.url ?? getDefaultOneAgentEndpoint());
 		const proto = this._getHttpProto(urlObj);
 		this._httpRequest = proto.request;
 
@@ -171,6 +171,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 			.map(m => m.serialize());
 
 		if (lines.length === 0) {
+			api.diag.warn("DynatraceMetricExporter: all metrics in batch failed to normalize");
 			process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
 			return;
 		}

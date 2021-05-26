@@ -49,14 +49,16 @@ const {
 
 // configure API endpoint and authentication token
 const exporter = new DynatraceMetricExporter({
-    // don't put this in your code, read it from an env var or config file
-    url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
-    APIToken: 'token123'’,
-    prefix: 'MyPrefix', // optional
-    defaultDimensions: [ // optional
-      key: "default-dimension",
-      value: "with-value"
-    ]
+  // URL and API token are only required if there is no OneAgent running on the host.
+  // If there is a OneAgent, the exporter will use it to export metrics with no
+  // further configuration required.
+  url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
+  APIToken: '<load API token from secure location such as env or config file>'’,
+  prefix: 'MyPrefix', // optional
+  defaultDimensions: [ // optional
+    key: "default-dimension",
+    value: "with-value"
+  ]
 });
 
 const meter = new MeterProvider({
@@ -135,11 +137,12 @@ pairs, which will be added as additional labels/dimensions to all data points.
 
 ## OneAgent Metadata Enrichment
 
-If running on a host with a running OneAgent, the exporter will export metadata collected by the OneAgent to the Dynatrace endpoint.
+If running on a host with a running OneAgent, the exporter will export metadata
+collected by the OneAgent to the Dynatrace endpoint.
 This typically consists of the Dynatrace host ID and process group ID.
-More information on the underlying feature used by the exporter can be found in the [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
-If no Dynatrace API endpoint is set, the default exporter endpoint will be the OneAgent endpoint, and this option will be set automatically.
-Therefore, if no endpoint is specified, a OneAgent is assumed to be running and exported to, including metadata.
-
-Due to implementation details of the Go runtime and the OneAgent, it is currently not possible to read metadata on Unix/Linux systems,
-therefore OneAgent enrichment for Go only functions on Windows hosts at this time.
+More information on the underlying feature used by the exporter can be found in
+the [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
+If no Dynatrace API endpoint is set, the default exporter endpoint will be the
+OneAgent endpoint, and this option will be set automatically.
+Therefore, if no endpoint is specified, a OneAgent is assumed to be running and
+exported to, including metadata.

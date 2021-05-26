@@ -27,12 +27,12 @@
   },
   "homepage": "https://github.com/dynatrace-oss/opentelemetry-metrics-js#readme",
   "peerDependencies": {
-    "@opentelemetry/api": "1.0.0-rc.0",
+    "@opentelemetry/api": "0.20.0",
     "@opentelemetry/core": "^0.19.0",
     "@opentelemetry/metrics": "^0.19.0"
   },
   "devDependencies": {
-    "@opentelemetry/api": "1.0.0-rc.0",
+    "@opentelemetry/api": "0.20.0",
     "@opentelemetry/core": "^0.19.0",
     "@opentelemetry/metrics": "^0.19.0",
     "@types/jest": "^25.2.3",

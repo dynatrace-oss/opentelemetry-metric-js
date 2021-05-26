@@ -50,7 +50,12 @@ export class MetricFactory {
 	 * Use a total counter when a value represents the total value of a count.
 	 * Returns null if key normalization fails to produce a valid metric key.
 	 */
-	public createTotalCounter(name: string, dimensions: Dimension[], value: number, ts?: number): Metric | null {
+	public createTotalCounter(
+		name: string,
+		dimensions: Dimension[],
+		value: number,
+		timestamp?: number
+	): Metric | null {
 		const key = normalizeMetricKey(this._getKey(name));
 		if (!key) {
 			return null;
@@ -58,7 +63,7 @@ export class MetricFactory {
 		if (typeof value !== "number") {
 			return null;
 		}
-		return new TotalCounter(key, this._getDimensions(dimensions), value, ts);
+		return new TotalCounter(key, this._getDimensions(dimensions), value, timestamp);
 	}
 
 	/**
@@ -131,7 +136,7 @@ export class MetricFactory {
 	}
 
 	/**
-	 * Get dimension list including default dimensions
+	 * Get dimension list including default dimensions and OneAgent metadata if set
 	 */
 	private _getDimensions(dimensions: Dimension[]): Dimension[] {
 		return this._deduplicateDimensions([

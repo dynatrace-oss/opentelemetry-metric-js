@@ -17,7 +17,7 @@
 const DEFAULT_BASE_URL = "http://localhost:14499/metrics/ingest";
 const PAYLOAD_LINES_LIMIT = 1000;
 
-export function getDefaultBaseUrl(): string {
+export function getDefaultOneAgentEndpoint(): string {
 	return DEFAULT_BASE_URL;
 }
 
