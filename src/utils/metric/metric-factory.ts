@@ -49,6 +49,9 @@ export class MetricFactory {
 	 * Create a total counter with a prefixed and normalized key and normalized dimensions.
 	 * Use a total counter when a value represents the total value of a count.
 	 * Returns null if key normalization fails to produce a valid metric key.
+	 * If no explicit timestamp is provided, the server will use the current time when
+	 * the metric is ingested.
+	 *
 	 */
 	public createTotalCounter(
 		name: string,
@@ -70,8 +73,10 @@ export class MetricFactory {
 	 * Create a delta counter with a prefixed and normalized key and normalized dimensions.
 	 * Use a delta counter when a value represents only the change from the previous count.
 	 * Returns null if key normalization fails to produce a valid metric key.
+	 * If no explicit timestamp is provided, the server will use the current time when
+	 * the metric is ingested.
 	 */
-	public createDeltaCounter(name: string, dimensions: Dimension[], value: number, ts?: number): Metric | null {
+	public createDeltaCounter(name: string, dimensions: Dimension[], value: number, timestamp?: number): Metric | null {
 		const key = normalizeMetricKey(this._getKey(name));
 		if (!key) {
 			return null;
@@ -79,15 +84,17 @@ export class MetricFactory {
 		if (typeof value !== "number") {
 			return null;
 		}
-		return new DeltaCounter(key, this._getDimensions(dimensions), value, ts);
+		return new DeltaCounter(key, this._getDimensions(dimensions), value, timestamp);
 	}
 
 	/**
 	 * Create a gauge with a prefixed and normalized key and normalized dimensions.
 	 * Use a gauge when a value represents a measurement.
 	 * Returns null if key normalization fails to produce a valid metric key.
+	 * If no explicit timestamp is provided, the server will use the current time when
+	 * the metric is ingested.
 	 */
-	public createGauge(name: string, dimensions: Dimension[], value: number, ts?: number): Metric | null {
+	public createGauge(name: string, dimensions: Dimension[], value: number, timestamp?: number): Metric | null {
 		const key = normalizeMetricKey(this._getKey(name));
 		if (!key) {
 			return null;
@@ -95,15 +102,17 @@ export class MetricFactory {
 		if (typeof value !== "number") {
 			return null;
 		}
-		return new Gauge(key, this._getDimensions(dimensions), value, ts);
+		return new Gauge(key, this._getDimensions(dimensions), value, timestamp);
 	}
 
 	/**
 	 * Create a summary with a prefixed and normalized key and normalized dimensions.
 	 * Use a summary when individual data points and exact values are not needed.
 	 * Returns null if key normalization fails to produce a valid metric key.
+	 * If no explicit timestamp is provided, the server will use the current time when
+	 * the metric is ingested.
 	 */
-	public createSummary(name: string, dimensions: Dimension[], value: SummaryValue, ts?: number): Metric | null {
+	public createSummary(name: string, dimensions: Dimension[], value: SummaryValue, timestamp?: number): Metric | null {
 		const key = normalizeMetricKey(this._getKey(name));
 		if (!key) {
 			return null;
@@ -122,7 +131,7 @@ export class MetricFactory {
 		) {
 			return null;
 		}
-		return new Summary(key, this._getDimensions(dimensions), { min, max, count, sum }, ts);
+		return new Summary(key, this._getDimensions(dimensions), { min, max, count, sum }, timestamp);
 	}
 
 	/**
