@@ -206,6 +206,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 				self._isShutdown = true;
 				process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
 			} else {
+				// If some lines were invalid, a 400 status code will end up here
 				api.diag.warn(
 					`Received status code ${res.statusCode} from Dynatrace`
 				);
