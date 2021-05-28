@@ -1,7 +1,7 @@
 {
   "name": "@dynatrace/opentelemetry-exporter-metrics",
   "description": "OpenTelemetry metrics exporter for Dynatrace",
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "author": "Dynatrace",
   "license": "Apache-2",
   "publishConfig": {
@@ -14,7 +14,7 @@
     "compile": "tsc",
     "clean": "rimraf build",
     "prepare": "npm run clean && npm run compile",
-    "lint": "eslint --ext ts .",
+    "lint": "eslint --ext ts src tests",
     "lint:md": "markdownlint -i node_modules **/*.md",
     "check": "npm run prepare && npm run lint && npm run lint:md && npm t"
   },
@@ -27,33 +27,32 @@
   },
   "homepage": "https://github.com/dynatrace-oss/opentelemetry-metrics-js#readme",
   "peerDependencies": {
-    "@opentelemetry/api": "^0.14.0",
-    "@opentelemetry/core": "^0.14.0",
-    "@opentelemetry/metrics": "^0.14.0"
+    "@opentelemetry/api": "0.20.0",
+    "@opentelemetry/core": "^0.19.0",
+    "@opentelemetry/metrics": "^0.19.0"
   },
   "devDependencies": {
-    "@opentelemetry/api": "^0.14.0",
-    "@opentelemetry/core": "^0.14.0",
-    "@opentelemetry/metrics": "^0.14.0",
+    "@opentelemetry/api": "0.20.0",
+    "@opentelemetry/core": "^0.19.0",
+    "@opentelemetry/metrics": "^0.19.0",
     "@types/jest": "^25.2.3",
-    "@types/node": "^14.14.21",
-    "@typescript-eslint/eslint-plugin": "^4.14.0",
-    "@typescript-eslint/parser": "^4.14.0",
-    "eslint": "^7.18.0",
-    "eslint-plugin-deprecation": "1.2.0",
-    "eslint-plugin-header": "^3.1.0",
+    "@types/mock-fs": "^4.13.0",
+    "@types/node": "^15.0.2",
+    "@typescript-eslint/eslint-plugin": "^4.22.1",
+    "@typescript-eslint/parser": "^4.22.1",
+    "eslint": "^7.25.0",
+    "eslint-plugin-deprecation": "^1.2.1",
+    "eslint-plugin-header": "^3.1.1",
     "jest": "^25.5.4",
     "markdownlint-cli": "^0.26.0",
+    "mock-fs": "^4.14.0",
     "rimraf": "^3.0.2",
-    "ts-jest": "^26.4.4",
-    "typescript": "^4.1.3"
+    "ts-jest": "^25.5.1",
+    "typescript": "^4.2.4"
   },
   "files": [
-    "build/**/*.js",
-    "!build/**/*.spec.js",
-    "build/**/*.d.ts",
-    "!build/**/*.spec.d.ts",
-    "build/**/*.js.map",
-    "!build/**/*.spec.js.map"
+    "build/src/**/*.js",
+    "build/src/**/*.d.ts",
+    "build/src/**/*.js.map"
   ]
 }

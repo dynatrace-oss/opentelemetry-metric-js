@@ -14,7 +14,9 @@
 	limitations under the License.
 */
 
-import * as api from "@opentelemetry/api";
+import { Dimension } from "./utils/metric/metric";
+// re-export type because it is used in the config
+export { Dimension } from "./utils/metric/metric";
 
 /**
  * Configuration interface for Dynatrace metrics exporter
@@ -28,11 +30,9 @@ export interface ExporterConfig {
 	prefix?: string;
 
 	/**
-   * Default tags to be appended
-   *
-   * @default []
-   */
-	tags?: Array<string>;
+	 * Default dimensions to be included on every metric
+	 */
+	defaultDimensions?: Array<Dimension>;
 
 	/**
    * Url of the Dynatrace metrics ingest endpoint.
@@ -47,7 +47,4 @@ export interface ExporterConfig {
    * @default ''
    */
 	APIToken?: string;
-
-	/** Standard logging interface */
-	logger?: api.Logger;
 }

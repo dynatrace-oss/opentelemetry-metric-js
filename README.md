@@ -49,10 +49,16 @@ const {
 
 // configure API endpoint and authentication token
 const exporter = new DynatraceMetricExporter({
-    // don't put this in your code, read it from an env var or config file
-    url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
-    APIToken: 'token123'’,
-    prefix: 'MyPrefix', // optional
+  // URL and API token are only required if there is no OneAgent running on the host.
+  // If there is a OneAgent, the exporter will use it to export metrics with no
+  // further configuration required.
+  url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
+  APIToken: '<load API token from secure location such as env or config file>'’,
+  prefix: 'MyPrefix', // optional
+  defaultDimensions: [ // optional
+    key: "default-dimension",
+    value: "with-value"
+  ]
 });
 
 const meter = new MeterProvider({
@@ -75,6 +81,11 @@ setInterval(() => {
   upDownCounter.bind(labels).add(Math.random() > 0.5 ? 1 : -1);
 }, 1000);
 ```
+
+If a batching processor is used, a batch size of 1000 or less is recommended.
+If a batch larger than 1000 metrics is exported, it will be exported using
+multiple requests. If any request fails, the entire batch will be considered
+to have failed.
 
 A full setup is provided in our [example project](samples/).
 
@@ -121,5 +132,17 @@ metric key, separated by a dot (`<prefix>.<namespace>.<name>`).
 
 #### Default Labels/Dimensions
 
-The `tags` parameter can be used to optionally specify a list of key/value
+The `defaultDimensions` parameter can be used to optionally specify a list of key/value
 pairs, which will be added as additional labels/dimensions to all data points.
+
+## OneAgent Metadata Enrichment
+
+If running on a host with a running OneAgent, the exporter will export metadata
+collected by the OneAgent to the Dynatrace endpoint.
+This typically consists of the Dynatrace host ID and process group ID.
+More information on the underlying feature used by the exporter can be found in
+the [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
+If no Dynatrace API endpoint is set, the default exporter endpoint will be the
+OneAgent endpoint, and this option will be set automatically.
+Therefore, if no endpoint is specified, a OneAgent is assumed to be running and
+exported to, including metadata.

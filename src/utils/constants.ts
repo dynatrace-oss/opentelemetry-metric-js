@@ -14,5 +14,13 @@
 	limitations under the License.
 */
 
-export * from "./MetricExporter";
-export * from "./types";
+const DEFAULT_BASE_URL = "http://localhost:14499/metrics/ingest";
+const PAYLOAD_LINES_LIMIT = 1000;
+
+export function getDefaultOneAgentEndpoint(): string {
+	return DEFAULT_BASE_URL;
+}
+
+export function getPayloadLinesLimit(): number {
+	return PAYLOAD_LINES_LIMIT;
+}
