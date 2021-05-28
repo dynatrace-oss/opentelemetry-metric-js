@@ -111,9 +111,10 @@ export class DynatraceMetricExporter implements MetricExporter {
 			const dimensions = Object.entries(metric.labels).map(([key, value]) => ({ key, value }));
 			switch (metric.aggregator.kind) {
 				case AggregatorKind.SUM: {
+					// TODO: when metrics 0.20.0 is released use aggregator.aggregationTemporality
 					const data = metric.aggregator.toPoint();
 					const normalizedMetric = this._dtMetricFactory
-						.createTotalCounter(
+						.createDeltaCounter(
 							metric.descriptor.name,
 							dimensions,
 							data.value,
