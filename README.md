@@ -55,7 +55,7 @@ const exporter = new DynatraceMetricExporter({
   url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
   APIToken: '<load API token from secure location such as env or config file>'’,
   prefix: 'MyPrefix', // optional
-  defaultDimensions: { // optional
+  defaultDimensions: [{ // optional
     key: "default-dimension",
     value: "with-value"
   }]
