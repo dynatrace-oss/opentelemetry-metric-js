@@ -58,7 +58,7 @@ const exporter = new DynatraceMetricExporter({
   defaultDimensions: { // optional
     key: "default-dimension",
     value: "with-value"
-  }
+  }]
 });
 
 const meter = new MeterProvider({
