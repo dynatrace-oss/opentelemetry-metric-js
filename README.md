@@ -1,8 +1,11 @@
 # Dynatrace OpenTelemetry Metrics Exporter for JavaScript
 
-> This exporter is based on the OpenTelemetry Metrics SDK for JavaScript, which is currently in an alpha state and neither considered stable nor complete as of this writing.
-> As such, this exporter is not intended for production use until the underlying OpenTelemetry Metrics API and SDK are stable.
-> See [open-telemetry/opentelemetry-js](https://github.com/open-telemetry/opentelemetry-js) for the current state of the OpenTelemetry SDK for JavaScript.
+> This exporter is based on the OpenTelemetry Metrics SDK for JavaScript,
+> which is currently in an alpha state and neither considered stable nor complete as of this writing.
+> As such, this exporter is not intended for production use until the
+> underlying OpenTelemetry Metrics API and SDK are stable.
+> See [open-telemetry/opentelemetry-js](https://github.com/open-telemetry/opentelemetry-js)
+> for the current state of the OpenTelemetry SDK for JavaScript.
 
 ## Getting started
 
