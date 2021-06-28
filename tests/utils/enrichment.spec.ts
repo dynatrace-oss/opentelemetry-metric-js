@@ -30,7 +30,7 @@ describe("Enrichment", () => {
 	});
 
 	describe("when indirection file is empty", () => {
-		beforeAll(() => {
+		beforeEach(() => {
 			mock({
 				"dt_metadata_e617c525669e072eebe3d0f08212e8f2.json": ""
 			});
@@ -43,7 +43,7 @@ describe("Enrichment", () => {
 
 
 	describe("when the indirection points to a missing file", () => {
-		beforeAll(() => {
+		beforeEach(() => {
 			mock({
 				"dt_metadata_e617c525669e072eebe3d0f08212e8f2.json": "missing.json"
 			});
@@ -55,7 +55,7 @@ describe("Enrichment", () => {
 	});
 
 	describe("when the indirection points to an invalid json file", () => {
-		beforeAll(() => {
+		beforeEach(() => {
 			mock({
 				"dt_metadata_e617c525669e072eebe3d0f08212e8f2.json": "invalid.json",
 				"invalid.json": "this is not json"
@@ -68,7 +68,7 @@ describe("Enrichment", () => {
 	});
 
 	describe("when the indirection file points to a valid json file", () => {
-		beforeAll(() => {
+		beforeEach(() => {
 			mock({
 				"dt_metadata_e617c525669e072eebe3d0f08212e8f2.json": "valid.json",
 				"valid.json": JSON.stringify({ property1: "value1" })
