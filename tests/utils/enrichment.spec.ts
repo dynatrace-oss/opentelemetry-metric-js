@@ -16,48 +16,88 @@
 
 import { getOneAgentMetadata } from "../../src/utils/enrichment";
 import * as mock from "mock-fs";
+import { DynatraceMetricExporter } from "../../src";
 
 describe("Enrichment", () => {
-	beforeAll(() => {
-		mock({
-			"empty_indirection.json": "",
-
-			"indirection_to_missing.json": "missing.json",
-			"indirection_to_invalid.json": "invalid.json",
-			"indirection_to_valid.json": "valid.json",
-
-			"empty.json": "",
-			"invalid.json": "this is not valid json",
-			"valid.json": JSON.stringify({ property1: "value1" })
-		});
-	});
-
 	afterAll(() => {
 		mock.restore();
 	});
 
-	it("should not crash if the indirection file does not exist", () => {
-		//@ts-expect-error shouldn't be allowed to pass a file name 🤫
-		expect(getOneAgentMetadata("file_not_exist")).toStrictEqual([]);
+	describe("when indirection file does not exist", () => {
+		it("should not crash", () => {
+			expect(getOneAgentMetadata()).toStrictEqual([]);
+		});
 	});
 
-	it("should not crash if the indirection file is empty", () => {
-		//@ts-expect-error shouldn't be allowed to pass a file name 🤫
-		expect(getOneAgentMetadata("empty_indirection.json")).toStrictEqual([]);
+	describe("when indirection file is empty", () => {
+		beforeAll(() => {
+			mock({
+				"dt_metadata_e617c525669e072eebe3d0f08212e8f2.json": ""
+			});
+		});
+
+		it("should not crash", () => {
+			expect(getOneAgentMetadata()).toStrictEqual([]);
+		});
 	});
 
-	it("should not crash if the indirection file points to missing file", () => {
-		//@ts-expect-error shouldn't be allowed to pass a file name 🤫
-		expect(getOneAgentMetadata("indirection_to_missing.json")).toStrictEqual([]);
+
+	describe("when the indirection points to a missing file", () => {
+		beforeAll(() => {
+			mock({
+				"dt_metadata_e617c525669e072eebe3d0f08212e8f2.json": "missing.json"
+			});
+		});
+
+		it("should not crash", () => {
+			expect(getOneAgentMetadata()).toStrictEqual([]);
+		});
 	});
 
-	it("should not crash if the indirection file points to invalid file", () => {
-		//@ts-expect-error shouldn't be allowed to pass a file name 🤫
-		expect(getOneAgentMetadata("indirection_to_invalid.json")).toStrictEqual([]);
+	describe("when the indirection points to an invalid json file", () => {
+		beforeAll(() => {
+			mock({
+				"dt_metadata_e617c525669e072eebe3d0f08212e8f2.json": "invalid.json",
+				"invalid.json": "this is not json"
+			});
+		});
+
+		it("should not crash", () => {
+			expect(getOneAgentMetadata()).toStrictEqual([]);
+		});
 	});
 
-	it("should read json properties from the file", () => {
-		//@ts-expect-error shouldn't be allowed to pass a file name 🤫
-		expect(getOneAgentMetadata("indirection_to_valid.json")).toStrictEqual([{ key: "property1", value: "value1" }]);
+	describe("when the indirection file points to a valid json file", () => {
+		beforeAll(() => {
+			mock({
+				"dt_metadata_e617c525669e072eebe3d0f08212e8f2.json": "valid.json",
+				"valid.json": JSON.stringify({ property1: "value1" })
+			});
+		});
+
+		it("should read metadata", () => {
+			expect(getOneAgentMetadata()).toStrictEqual([{ key: "property1", value: "value1" }]);
+		});
+
+		describe("when the OneAgent metadata extraction is not defined", () => {
+			it("should get metadata by default", () => {
+				const exporter = new DynatraceMetricExporter();
+				expect(exporter["_dtMetricFactory"]["_oneAgentMetadata"]).toStrictEqual([{ key: "property1", value: "value1" }]);
+			});
+		});
+
+		describe("when the OneAgent metadata extraction is disabled", () => {
+			it("should not get metadata", () => {
+				const exporter = new DynatraceMetricExporter({ oneAgentMetadataEnrichment: false });
+				expect(exporter["_dtMetricFactory"]["_oneAgentMetadata"]).toStrictEqual([]);
+			});
+		});
+
+		describe("when the OneAgent metadata extraction is enabled", () => {
+			it("should get metadata", () => {
+				const exporter = new DynatraceMetricExporter({ oneAgentMetadataEnrichment: true });
+				expect(exporter["_dtMetricFactory"]["_oneAgentMetadata"]).toStrictEqual([{ key: "property1", value: "value1" }]);
+			});
+		});
 	});
 });
