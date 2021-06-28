@@ -19,7 +19,7 @@ import * as mock from "mock-fs";
 import { DynatraceMetricExporter } from "../../src";
 
 describe("Enrichment", () => {
-	afterAll(() => {
+	afterEach(() => {
 		mock.restore();
 	});
 
