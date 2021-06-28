@@ -19,8 +19,8 @@ import { Dimension } from "./metric/metric";
 
 const cIndirectionFilename = "dt_metadata_e617c525669e072eebe3d0f08212e8f2.json";
 
-function readOneAgentMetadata(filename: string): Record<string, string> {
-	const indirectionFileContents = readFileSync(filename).toString("utf-8").trim();
+function readOneAgentMetadata(): Record<string, string> {
+	const indirectionFileContents = readFileSync(cIndirectionFilename).toString("utf-8").trim();
 	if (indirectionFileContents === "") {
 		throw new Error("metadata file name is empty");
 	}
@@ -36,10 +36,9 @@ function readOneAgentMetadata(filename: string): Record<string, string> {
  *
  * @returns list of dimensions from OneAgent
  */
-export function getOneAgentMetadata(): Dimension[];
-export function getOneAgentMetadata(_testFilename?: string): Dimension[] {
+export function getOneAgentMetadata(): Dimension[] {
 	try {
-		return Object.entries(readOneAgentMetadata(_testFilename ?? cIndirectionFilename))
+		return Object.entries(readOneAgentMetadata())
 			.map(([key, value]) => ({ key, value }));
 	} catch {
 		return [];
