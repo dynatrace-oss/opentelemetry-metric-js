@@ -37,7 +37,7 @@ export interface ExporterConfig {
 	/**
 	 * Url of the Dynatrace metrics ingest endpoint.
 	 * This defaults to a local endpoint provided by the Dynatrace OneAgent.
-	 * @default 'http://127.0.0.1:14499/metrics/ingest'
+	 * @default 'http://localhost:14499/metrics/ingest'
 	 */
 	url?: string;
 
