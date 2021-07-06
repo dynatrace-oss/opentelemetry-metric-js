@@ -88,14 +88,14 @@ describe("Enrichment", () => {
 
 		describe("when the OneAgent metadata extraction is disabled", () => {
 			it("should not get metadata", () => {
-				const exporter = new DynatraceMetricExporter({ oneAgentMetadataEnrichment: false });
+				const exporter = new DynatraceMetricExporter({ dynatraceMetadataEnrichment: false });
 				expect(exporter["_dtMetricFactory"]["_oneAgentMetadata"]).toStrictEqual([]);
 			});
 		});
 
 		describe("when the OneAgent metadata extraction is enabled", () => {
 			it("should get metadata", () => {
-				const exporter = new DynatraceMetricExporter({ oneAgentMetadataEnrichment: true });
+				const exporter = new DynatraceMetricExporter({ dynatraceMetadataEnrichment: true });
 				expect(exporter["_dtMetricFactory"]["_oneAgentMetadata"]).toStrictEqual([{ key: "property1", value: "value1" }]);
 			});
 		});

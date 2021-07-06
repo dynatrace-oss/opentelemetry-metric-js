@@ -108,6 +108,8 @@ Using the local API endpoint, the host ID and host name context are
 automatically added to each metric as dimensions.
 The default metric API endpoint exposed by the OneAgent is
 `http://localhost:14499/metrics/ingest`.
+If no Dynatrace API endpoint is set, the default exporter endpoint will be the
+OneAgent endpoint, and this option will be set automatically.
 
 #### Dynatrace API Token
 
@@ -132,14 +134,10 @@ metric key, separated by a dot (`<prefix>.<namespace>.<name>`).
 The `defaultDimensions` parameter can be used to optionally specify a list of key/value
 pairs, which will be added as additional labels/dimensions to all data points.
 
-## OneAgent Metadata Enrichment
+## Dynatrace Metadata Enrichment
 
 If running on a host with a running OneAgent, the exporter will export metadata
 collected by the OneAgent to the Dynatrace endpoint.
 This typically consists of the Dynatrace host ID and process group ID.
 More information on the underlying feature used by the exporter can be found in
 the [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
-If no Dynatrace API endpoint is set, the default exporter endpoint will be the
-OneAgent endpoint, and this option will be set automatically.
-Therefore, if no endpoint is specified, a OneAgent is assumed to be running and
-exported to, including metadata.

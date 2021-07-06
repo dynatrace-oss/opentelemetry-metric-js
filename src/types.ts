@@ -49,9 +49,9 @@ export interface ExporterConfig {
 	APIToken?: string;
 
 	/**
-	 * Set false to disable OneAgent metadata enrichment
+	 * Set false to disable Dynatrace metadata enrichment
 	 *
 	 * @default true
 	 */
-	oneAgentMetadataEnrichment?: boolean;
+	dynatraceMetadataEnrichment?: boolean;
 }

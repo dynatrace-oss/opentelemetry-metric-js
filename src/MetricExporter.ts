@@ -42,7 +42,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 	constructor(config: ExporterConfig = {}) {
 		const defaultDimensions = config.defaultDimensions?.slice() ?? [];
 
-		const oneAgentMetadata = config.oneAgentMetadataEnrichment === false
+		const oneAgentMetadata = config.dynatraceMetadataEnrichment === false
 			? undefined
 			: getOneAgentMetadata();
 
