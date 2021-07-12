@@ -79,21 +79,21 @@ describe("Enrichment", () => {
 			expect(getOneAgentMetadata()).toStrictEqual([{ key: "property1", value: "value1" }]);
 		});
 
-		describe("when the OneAgent metadata extraction is not defined", () => {
+		describe("and dynatraceMetadataEnrichment is not defined", () => {
 			it("should get metadata by default", () => {
 				const exporter = new DynatraceMetricExporter();
 				expect(exporter["_dtMetricFactory"]["_oneAgentMetadata"]).toStrictEqual([{ key: "property1", value: "value1" }]);
 			});
 		});
 
-		describe("when the OneAgent metadata extraction is disabled", () => {
+		describe("and dynatraceMetadataEnrichment is disabled", () => {
 			it("should not get metadata", () => {
 				const exporter = new DynatraceMetricExporter({ dynatraceMetadataEnrichment: false });
 				expect(exporter["_dtMetricFactory"]["_oneAgentMetadata"]).toStrictEqual([]);
 			});
 		});
 
-		describe("when the OneAgent metadata extraction is enabled", () => {
+		describe("and dynatraceMetadataEnrichment is enabled", () => {
 			it("should get metadata", () => {
 				const exporter = new DynatraceMetricExporter({ dynatraceMetadataEnrichment: true });
 				expect(exporter["_dtMetricFactory"]["_oneAgentMetadata"]).toStrictEqual([{ key: "property1", value: "value1" }]);

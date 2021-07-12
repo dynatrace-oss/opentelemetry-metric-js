@@ -102,14 +102,15 @@ would be `https://myenv123.live.dynatrace.com/api/v2/metrics/ingest`.
 
 If a OneAgent is installed on the host, it can provide a local endpoint for
 providing metrics directly without the need for an API token.
-This feature is currently in an Early Adopter phase and has to be enabled as
-described in the [OneAgent metric API documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/local-api/).
+Depending on your environment, this feature might have to be enabled as
+described in the [OneAgent metric API documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/local-api/)
+first.
 Using the local API endpoint, the host ID and host name context are
 automatically added to each metric as dimensions.
 The default metric API endpoint exposed by the OneAgent is
 `http://localhost:14499/metrics/ingest`.
-If no Dynatrace API endpoint is set, the default exporter endpoint will be the
-OneAgent endpoint, and this option will be set automatically.
+If no Dynatrace API endpoint is set, the exporter will default to the local
+OneAgent endpoint.
 
 #### Dynatrace API Token
 
@@ -141,3 +142,4 @@ collected by the OneAgent to the Dynatrace endpoint.
 This typically consists of the Dynatrace host ID and process group ID.
 More information on the underlying feature used by the exporter can be found in
 the [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
+By default this option is turned on.
