@@ -35,16 +35,23 @@ export interface ExporterConfig {
 	defaultDimensions?: Array<Dimension>;
 
 	/**
-   * Url of the Dynatrace metrics ingest endpoint.
-   * This defaults to a local endpoint provided by the Dynatrace OneAgent.
-   * @default 'http://127.0.0.1:14499/metrics/ingest'
-   */
+	 * Url of the Dynatrace metrics ingest endpoint.
+	 * This defaults to a local endpoint provided by the Dynatrace OneAgent.
+	 * @default 'http://localhost:14499/metrics/ingest'
+	 */
 	url?: string;
 
 	/**
-   * Dynatrace API token.
-   * Can be ommitted if the local OneAgent endpoint is used.
-   * @default ''
-   */
+	 * Dynatrace API token.
+	 * Can be ommitted if the local OneAgent endpoint is used.
+	 * @default ''
+	 */
 	APIToken?: string;
+
+	/**
+	 * Set false to disable Dynatrace metadata enrichment
+	 *
+	 * @default true
+	 */
+	dynatraceMetadataEnrichment?: boolean;
 }
