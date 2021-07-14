@@ -46,16 +46,11 @@ const {
 
 // configure API endpoint and authentication token
 const exporter = new DynatraceMetricExporter({
-  // URL and API token are only required if there is no OneAgent running on the host.
+  // This is only required if the OneAgent is not installed on the same host
   // If there is a OneAgent, the exporter will use it to export metrics with no
   // further configuration required.
-  url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
-  APIToken: '<load API token from secure location such as env or config file>'’,
-  prefix: 'MyPrefix', // optional
-  defaultDimensions: [{ // optional
-    key: "default-dimension",
-    value: "with-value"
-  }]
+  // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
+  // APIToken: 'token123'’,
 });
 
 const meter = new MeterProvider({
@@ -93,6 +88,9 @@ the constructor:
 
 #### Dynatrace API Endpoint
 
+API Endpoint and Token are optional. By default, metrics will be exported to
+the local OneAgent endpoint described below.
+
 The endpoint to which the metrics are sent is specified using the `url`
 parameter.
 
@@ -113,6 +111,8 @@ If no Dynatrace API endpoint is set, the exporter will default to the local
 OneAgent endpoint.
 
 #### Dynatrace API Token
+
+Required only if an API endpoint is also provided.
 
 The Dynatrace API token to be used by the exporter is specified using the
 `APIToken` parameter and could, for example, be read from an environment
