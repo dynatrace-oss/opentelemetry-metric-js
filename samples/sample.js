@@ -3,14 +3,15 @@
 const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
 const { MeterProvider } = require('@opentelemetry/metrics');
 const { DynatraceMetricExporter } = require('..');
-const config = require("./config.json");
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
 
 const exporter = new DynatraceMetricExporter({
   prefix: 'sample',
-  url: config.url,
-  APIToken: config.APIToken,
+
+  // URL and API Token are not required if using the OneAgent local endpoint
+  // url: "https://abc12345.live.dynatrace.com/api/v2/metrics/ingest",
+  // APIToken: "API TOKEN HERE"
 });
 
 const meter = new MeterProvider({
