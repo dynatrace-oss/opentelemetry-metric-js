@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-import * as api from "@opentelemetry/api";
+import { diag } from "@opentelemetry/api";
 import { ExportResult, ExportResultCode, hrTimeToMilliseconds } from "@opentelemetry/core";
 import { AggregatorKind, MetricExporter, MetricRecord } from "@opentelemetry/metrics";
 import * as http from "http";
@@ -175,7 +175,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 			.map(m => m.serialize());
 
 		if (lines.length === 0) {
-			api.diag.warn("DynatraceMetricExporter: all metrics in batch failed to normalize");
+			diag.warn("DynatraceMetricExporter: all metrics in batch failed to normalize");
 			process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
 			return;
 		}
@@ -186,13 +186,13 @@ export class DynatraceMetricExporter implements MetricExporter {
 		const self = this;
 
 		function onResponse(res: http.IncomingMessage) {
-			api.diag.debug(`request#onResponse: statusCode: ${res.statusCode}`);
+			diag.debug(`request#onResponse: statusCode: ${res.statusCode}`);
 
 
 			res.on("error", e => {
 				// no need for handling a response error as a valid statusCode has
 				// been received before which indicates message was received
-				api.diag.debug(`response#error: ${e.message}`);
+				diag.debug(`response#error: ${e.message}`);
 			});
 
 			if (
@@ -204,24 +204,24 @@ export class DynatraceMetricExporter implements MetricExporter {
 				process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
 			} else if (res.statusCode === 401 || res.statusCode === 403) {
 				res.resume(); // discard any incoming data
-				api.diag.warn("Not authorized to send spans to Dynatrace");
+				diag.warn("Not authorized to send spans to Dynatrace");
 				// 401/403 is permanent
 				self._isShutdown = true;
 				process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
 			} else {
 				// If some lines were invalid, a 400 status code will end up here
-				api.diag.warn(
+				diag.warn(
 					`Received status code ${res.statusCode} from Dynatrace`
 				);
 				res.on("data", (chunk: Buffer) => {
-					api.diag.debug("response#data:", chunk.toString("utf8"));
+					diag.debug("response#data:", chunk.toString("utf8"));
 				});
 				process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
 			}
 		}
 
 		function onError(err: Error) {
-			api.diag.error(err.message);
+			diag.error(err.message);
 			process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
 			return;
 		}
@@ -257,7 +257,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 
 	private _warnNormalizationFailure(name: string) {
 		if (this._failedNormalizations === 0) {
-			api.diag.warn(`DynatraceMetricExporter: Failed to normalize ${name}. Skipping exporting this metric.`);
+			diag.warn(`DynatraceMetricExporter: Failed to normalize ${name}. Skipping exporting this metric.`);
 		}
 		this._failedNormalizations = ++this._failedNormalizations % 1000;
 	}
