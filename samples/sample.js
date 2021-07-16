@@ -9,9 +9,9 @@ diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
 const exporter = new DynatraceMetricExporter({
   prefix: 'sample',
 
-  // URL and API Token are not required if using the OneAgent local endpoint
-  // url: "https://abc12345.live.dynatrace.com/api/v2/metrics/ingest",
-  // APIToken: "API TOKEN HERE"
+  // If no OneAgent is available locally, export directly to the Dynatrace server:
+  // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
+  // APIToken: '<load API token from secure location such as env or config file>'
 });
 
 const meter = new MeterProvider({
