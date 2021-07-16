@@ -7,7 +7,7 @@ const { DynatraceMetricExporter } = require('..');
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
 
 const exporter = new DynatraceMetricExporter({
-  prefix: 'sample',
+  prefix: 'sample', // optional
 
   // If no OneAgent is available locally, export directly to the Dynatrace server:
   // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
