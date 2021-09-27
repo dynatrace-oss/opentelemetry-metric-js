@@ -33,9 +33,9 @@ export class DynatraceMetricExporter implements MetricExporter {
 	private _failedNormalizations = 0;
 
 	/**
-   * Constructor
-   * @param config Exporter configuration
-   */
+	 * Constructor
+	 * @param config Exporter configuration
+	 */
 	constructor(config: ExporterConfig = {}) {
 		const defaultDimensions = config.defaultDimensions?.slice() ?? [];
 
@@ -77,8 +77,8 @@ export class DynatraceMetricExporter implements MetricExporter {
 	}
 
 	export(
-    metrics: MetricRecord[],
-    resultCallback: (result: ExportResult) => void
+		metrics: MetricRecord[],
+		resultCallback: (result: ExportResult) => void
 	): void {
 		if (metrics.length === 0) {
 			process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
@@ -115,10 +115,10 @@ export class DynatraceMetricExporter implements MetricExporter {
 					const data = metric.aggregator.toPoint();
 					const normalizedMetric = this._dtMetricFactory
 						.createCounterDelta(
-              metric.descriptor.name,
-              dimensions,
-              data.value,
-              new Date(hrTimeToMilliseconds(data.timestamp))
+							metric.descriptor.name,
+							dimensions,
+							data.value,
+							new Date(hrTimeToMilliseconds(data.timestamp))
 						);
 					if (normalizedMetric == null) {
 						this._warnNormalizationFailure(metric.descriptor.name);
@@ -140,10 +140,10 @@ export class DynatraceMetricExporter implements MetricExporter {
 					};
 					const normalizedMetric = this._dtMetricFactory
 						.createSummary(
-              metric.descriptor.name,
-              dimensions,
-              value,
-              new Date(hrTimeToMilliseconds(data.timestamp))
+							metric.descriptor.name,
+							dimensions,
+							value,
+							new Date(hrTimeToMilliseconds(data.timestamp))
 						);
 					if (normalizedMetric == null) {
 						this._warnNormalizationFailure(metric.descriptor.name);
@@ -154,10 +154,10 @@ export class DynatraceMetricExporter implements MetricExporter {
 					const data = metric.aggregator.toPoint();
 					const normalizedMetric = this._dtMetricFactory
 						.createGauge(
-              metric.descriptor.name,
-              dimensions,
-              data.value,
-              new Date(hrTimeToMilliseconds(data.timestamp))
+							metric.descriptor.name,
+							dimensions,
+							data.value,
+							new Date(hrTimeToMilliseconds(data.timestamp))
 						);
 					if (normalizedMetric == null) {
 						this._warnNormalizationFailure(metric.descriptor.name);
@@ -194,8 +194,8 @@ export class DynatraceMetricExporter implements MetricExporter {
 
 			if (
 				res.statusCode != null &&
-        res.statusCode >= 200 &&
-        res.statusCode < 300
+				res.statusCode >= 200 &&
+				res.statusCode < 300
 			) {
 				res.resume(); // discard any incoming data
 				process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
@@ -208,7 +208,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 			} else {
 				// If some lines were invalid, a 400 status code will end up here
 				diag.warn(
-          `Received status code ${res.statusCode} from Dynatrace`
+					`Received status code ${res.statusCode} from Dynatrace`
 				);
 				res.on("data", (chunk: Buffer) => {
 					diag.debug("response#data:", chunk.toString("utf8"));
@@ -240,7 +240,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 				break;
 			default:
 				throw new RangeError(
-          "DynatraceMetricExporter: options.url protocol unsupported"
+					"DynatraceMetricExporter: options.url protocol unsupported"
 				);
 		}
 		return proto;
