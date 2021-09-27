@@ -21,8 +21,14 @@ import * as http from "http";
 import * as https from "https";
 import * as url from "url";
 import { ExporterConfig } from "./types";
-import { getDynatraceMetadata, getDefaultOneAgentEndpoint, getPayloadLinesLimit } from "@dynatrace/metric-utils";
-import { MetricFactory, Metric, SummaryValue } from "@dynatrace/metric-utils";
+import {
+	getDynatraceMetadata,
+	getDefaultOneAgentEndpoint,
+	getPayloadLinesLimit,
+	MetricFactory,
+	Metric,
+	SummaryValue
+} from "@dynatrace/metric-utils";
 
 export class DynatraceMetricExporter implements MetricExporter {
 	private readonly _reqOpts: http.RequestOptions;
