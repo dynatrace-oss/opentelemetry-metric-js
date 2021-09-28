@@ -53,7 +53,7 @@ describe("MetricExporter", () => {
 describe("MetricExporter.export", () => {
 	beforeEach(() => nock.cleanAll());
 
-	test("should export metrics and return a success message", () => {
+	test("should export metrics and return a success message", (done) => {
 		const target_host =  "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -76,10 +76,11 @@ describe("MetricExporter.export", () => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				// the request was sent once.
 				expect(scope.isDone()).toBe(true);
+				done();
 			});
 	});
 
-	test("should return after normalizing metric name", () => {
+	test("should return after normalizing metric name", (done) => {
 		const target_host =  "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -98,10 +99,11 @@ describe("MetricExporter.export", () => {
 				(result: ExportResult) => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
 					expect(scope.isDone()).toBe(true);
+					done();
 				});
 	});
 
-	test("should return success on empty list but not send the request", () => {
+	test("should return success on empty list but not send the request", (done) => {
 		const target_host =  "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -117,12 +119,12 @@ describe("MetricExporter.export", () => {
 		exporter.export([],
 				(result: ExportResult) => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-
 					expect(scope.isDone()).toBe(false);
+					done();
 				});
 	});
 
-	test("should skip invalid metric and not send request", () => {
+	test("should skip invalid metric and not send request", (done) => {
 		const target_host =  "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -139,12 +141,12 @@ describe("MetricExporter.export", () => {
 		exporter.export([rec],
 				(result: ExportResult) => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-
 					expect(scope.isDone()).toBe(false);
+					done();
 				});
 	});
 
-	test("should skip invalid metric and send only valid metrics", () => {
+	test("should skip invalid metric and send only valid metrics", (done) => {
 		const target_host =  "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -166,10 +168,11 @@ describe("MetricExporter.export", () => {
 				(result: ExportResult) => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
 					expect(scope.isDone()).toBe(true);
+					done();
 				});
 	});
 
-	test("should send two requests if there is more than 1000 metrics", () => {
+	test("should send two requests if there is more than 1000 metrics", (done) => {
 		const target_host =  "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -192,6 +195,7 @@ describe("MetricExporter.export", () => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
 					// only done if the mock http request has been called twice
 					expect(scope.isDone()).toBe(true);
+					done();
 				});
 	});
 
