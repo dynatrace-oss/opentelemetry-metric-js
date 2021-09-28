@@ -39,8 +39,10 @@
   },
   "devDependencies": {
     "@opentelemetry/api": "1.0.1",
+    "@opentelemetry/api-metrics": "^0.23.0",
     "@opentelemetry/core": "^0.23.0",
     "@opentelemetry/metrics": "^0.23.0",
+    "@opentelemetry/resources": "^0.23.0",
     "@types/jest": "^27.0.2",
     "@types/mock-fs": "^4.13.1",
     "@types/node": "^16.3.2",
