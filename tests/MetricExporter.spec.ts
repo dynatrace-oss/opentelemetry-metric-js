@@ -51,6 +51,8 @@ describe("MetricExporter", () => {
 });
 
 describe("MetricExporter.export", () => {
+	beforeEach(() => nock.cleanAll());
+
 	test("should export metrics and return a success message", () => {
 		const target_host =  "https://example.com:8080";
 		const target_path = "/metrics";
@@ -62,38 +64,22 @@ describe("MetricExporter.export", () => {
 		// if this request is not received with a body matching the regex below,
 		// a non-success error code will be returned, making the expect call below
 		// fail.
-		nock(target_host)
+		const scope: nock.Scope = nock(target_host)
 			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.once()
 			.reply(200);
 
-		const aggregator = new SumAggregator();
-		aggregator.update(10);
-
-		// let metric: UpDownCounterMetric = new UpDownCounterMetric("test", );
-		const rec: MetricRecord = {
-			descriptor: {
-				name: "test",
-				description: "some desc",
-				unit: "unit",
-				metricKind: MetricKind.UP_DOWN_COUNTER,
-				valueType: ValueType.DOUBLE
-			},
-			labels: { "key": "value" },
-			aggregator: aggregator,
-			aggregationTemporality: AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA,
-			resource: Resource.EMPTY,
-			instrumentationLibrary: {
-				name: "my-mock-lib"
-			}
-		};
+		const rec: MetricRecord = getTestMetricRecord("test", 10, { "key": "value" });
 
 		exporter.export([rec],
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// the request was sent once.
+				expect(scope.isDone()).toBe(true);
 			});
 	});
 
-	test("should return error result when called with invalid metric name", () => {
+	test("should return after normalizing metric name", () => {
 		const target_host =  "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -101,23 +87,127 @@ describe("MetricExporter.export", () => {
 			url: target_url
 		});
 
-		nock(target_host)
-			.post(target_path, /~!@ count,delta=10 \d{13}/g)
-			.reply(400);
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, /_ count,delta=10 /)
+			.once()
+			.reply(200);
 
+		const rec: MetricRecord = getTestMetricRecord("~!@", 10, {});
+
+		exporter.export([rec],
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+					expect(scope.isDone()).toBe(true);
+				});
+	});
+
+	test("should return success on empty list but not send the request", () => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.once()
+			.reply(200);
+
+		exporter.export([],
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+
+					expect(scope.isDone()).toBe(false);
+				});
+	});
+
+	test("should skip invalid metric and not send request", () => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		const rec: MetricRecord = getTestMetricRecord("", 12, {});
+
+		exporter.export([rec],
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+
+					expect(scope.isDone()).toBe(false);
+				});
+	});
+
+	test("should skip invalid metric and send only valid metrics", () => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, /valid count,delta=13 \d{13}/)
+			.once()
+			.reply(200);
+
+		const records = [
+			getTestMetricRecord("", 12, {}),		// invalid
+			getTestMetricRecord("valid", 13,{})	// valid
+		];
+
+		exporter.export(records,
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+					expect(scope.isDone()).toBe(true);
+				});
+	});
+
+	test("should send two requests if there is more than 1000 metrics", () => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.twice()
+			.reply(200);
+
+		const records: MetricRecord[] = [...Array(1001).keys()]
+			.map((v: number)=> {
+				return getTestMetricRecord("metric" + v.toString(), v, {});
+			});
+
+		exporter.export(records,
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+					// only done if the mock http request has been called twice
+					expect(scope.isDone()).toBe(true);
+				});
+	});
+
+	function getTestMetricRecord(name: string, value: number, labels: {[key:string]: string}) : MetricRecord {
 		const aggregator = new SumAggregator();
-		aggregator.update(10);
+		aggregator.update(value);
 
-		// let metric: UpDownCounterMetric = new UpDownCounterMetric("test", );
-		const rec: MetricRecord = {
+		return {
 			descriptor: {
-				name: "~!@",
+				name:name,
 				description: "some desc",
 				unit: "unit",
 				metricKind: MetricKind.UP_DOWN_COUNTER,
 				valueType: ValueType.DOUBLE
 			},
-			labels: {},
+			labels: labels,
 			aggregator: aggregator,
 			aggregationTemporality: AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA,
 			resource: Resource.EMPTY,
@@ -125,10 +215,6 @@ describe("MetricExporter.export", () => {
 				name: "my-mock-lib"
 			}
 		};
-
-		exporter.export([rec],
-			(result: ExportResult) => {
-				expect(result.code).toEqual(ExportResultCode.FAILED);
-			});
-	});
+	}
 });
+
