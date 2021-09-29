@@ -61,6 +61,7 @@ describe("MetricExporter.export", () => {
 			url: target_url
 		});
 
+
 		// if this request is not received with a body matching the regex below,
 		// a non-success error code will be returned, making the expect call below
 		// fail.
@@ -74,13 +75,14 @@ describe("MetricExporter.export", () => {
 		exporter.export([rec],
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
-				// the request was sent once.
-				expect(scope.isDone()).toBe(true);
+				// the request was sent once, no pending mocks are available
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
 				done();
 			});
 	});
 
-	test("should return after normalizing metric name", (done) => {
+	test("should send request after normalizing metric name", (done) => {
 		const target_host =  "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -98,7 +100,8 @@ describe("MetricExporter.export", () => {
 		exporter.export([rec],
 				(result: ExportResult) => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-					expect(scope.isDone()).toBe(true);
+					expect(scope.activeMocks()).toHaveLength(0);
+					expect(scope.pendingMocks()).toHaveLength(0);
 					done();
 				});
 	});
@@ -113,13 +116,14 @@ describe("MetricExporter.export", () => {
 
 		const scope: nock.Scope = nock(target_host)
 			.post(target_path)
-			.once()
 			.reply(200);
+
+		// if a request is sent, the test will fail.
+		scope.addListener("replied", () => { fail("a request was sent when no request should have been sent"); });
 
 		exporter.export([],
 				(result: ExportResult) => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-					expect(scope.isDone()).toBe(false);
 					done();
 				});
 	});
@@ -136,12 +140,14 @@ describe("MetricExporter.export", () => {
 			.post(target_path)
 			.reply(200);
 
+		// if a request is sent, the test will fail.
+		scope.addListener("replied", () => { fail("a request was sent when no request should have been sent"); });
+
 		const rec: MetricRecord = getTestMetricRecord("", 12, {});
 
 		exporter.export([rec],
 				(result: ExportResult) => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-					expect(scope.isDone()).toBe(false);
 					done();
 				});
 	});
@@ -167,7 +173,9 @@ describe("MetricExporter.export", () => {
 		exporter.export(records,
 				(result: ExportResult) => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-					expect(scope.isDone()).toBe(true);
+					// the one available active mock has been used, therefore the request was sent.
+					expect(scope.activeMocks()).toHaveLength(0);
+					expect(scope.pendingMocks()).toHaveLength(0);
 					done();
 				});
 	});
@@ -180,6 +188,8 @@ describe("MetricExporter.export", () => {
 			url: target_url
 		});
 
+		// return the mock twice. In practice, one mock is marked as active,
+		// and one mock is placed in the pending mocks
 		const scope: nock.Scope = nock(target_host)
 			.post(target_path)
 			.twice()
@@ -190,11 +200,17 @@ describe("MetricExporter.export", () => {
 				return getTestMetricRecord("metric" + v.toString(), v, {});
 			});
 
+		// before exporting, one mock is active and one is pending
+		expect(scope.activeMocks()).toHaveLength(1);
+		expect(scope.pendingMocks()).toHaveLength(1);
 		exporter.export(records,
 				(result: ExportResult) => {
 					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-					// only done if the mock http request has been called twice
-					expect(scope.isDone()).toBe(true);
+
+					// both the active and the pending mocks have been "used up".
+					// This ensures that two requests were sent.
+					expect(scope.activeMocks()).toHaveLength(0);
+					expect(scope.pendingMocks()).toHaveLength(0);
 					done();
 				});
 	});
