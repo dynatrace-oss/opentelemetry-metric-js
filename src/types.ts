@@ -15,6 +15,7 @@
 */
 
 import { Dimension } from "@dynatrace/metric-utils";
+export { Dimension } from "@dynatrace/metric-utils";
 
 /**
  * Configuration interface for Dynatrace metrics exporter
