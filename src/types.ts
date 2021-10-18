@@ -14,9 +14,8 @@
 	limitations under the License.
 */
 
-import { Dimension } from "./utils/metric/metric";
-// re-export type because it is used in the config
-export { Dimension } from "./utils/metric/metric";
+import { Dimension } from "@dynatrace/metric-utils";
+export { Dimension } from "@dynatrace/metric-utils";
 
 /**
  * Configuration interface for Dynatrace metrics exporter

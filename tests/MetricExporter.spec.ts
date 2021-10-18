@@ -15,6 +15,13 @@
 */
 
 import { DynatraceMetricExporter } from "../src";
+import * as nock from "nock";
+import { MetricKind, MetricRecord, SumAggregator } from "@opentelemetry/metrics";
+import { AggregationTemporality, ValueType } from "@opentelemetry/api-metrics";
+import { ExportResult, ExportResultCode } from "@opentelemetry/core";
+import { Resource } from "@opentelemetry/resources";
+
+
 
 describe("MetricExporter", () => {
 	test("should default to oneagent endpoint", () => {
@@ -42,3 +49,192 @@ describe("MetricExporter", () => {
 		expect(exporter["_reqOpts"].protocol).toEqual("http:");
 	});
 });
+
+describe("MetricExporter.export", () => {
+	beforeEach(() => nock.cleanAll());
+
+	test("should export metrics and return a success message", (done) => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+
+		// if this request is not received with a body matching the regex below,
+		// a non-success error code will be returned, making the expect call below
+		// fail.
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.once()
+			.reply(200);
+
+		const rec: MetricRecord = getTestMetricRecord("test", 10, { "key": "value" });
+
+		exporter.export([rec],
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// the request was sent once, no pending mocks are available
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
+	});
+
+	test("should send request after normalizing metric name", (done) => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, /_ count,delta=10 /)
+			.once()
+			.reply(200);
+
+		const rec: MetricRecord = getTestMetricRecord("~!@", 10, {});
+
+		exporter.export([rec],
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+					expect(scope.activeMocks()).toHaveLength(0);
+					expect(scope.pendingMocks()).toHaveLength(0);
+					done();
+				});
+	});
+
+	test("should return success on empty list but not send the request", (done) => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		// if a request is sent, the test will fail.
+		scope.addListener("replied", () => { fail("a request was sent when no request should have been sent"); });
+
+		exporter.export([],
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+					done();
+				});
+	});
+
+	test("should skip invalid metric and not send request", (done) => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		// if a request is sent, the test will fail.
+		scope.addListener("replied", () => { fail("a request was sent when no request should have been sent"); });
+
+		const rec: MetricRecord = getTestMetricRecord("", 12, {});
+
+		exporter.export([rec],
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+					done();
+				});
+	});
+
+	test("should skip invalid metric and send only valid metrics", (done) => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, /valid count,delta=13 \d{13}/)
+			.once()
+			.reply(200);
+
+		const records = [
+			getTestMetricRecord("", 12, {}),		// invalid
+			getTestMetricRecord("valid", 13,{})	// valid
+		];
+
+		exporter.export(records,
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+					// the one available active mock has been used, therefore the request was sent.
+					expect(scope.activeMocks()).toHaveLength(0);
+					expect(scope.pendingMocks()).toHaveLength(0);
+					done();
+				});
+	});
+
+	test("should send two requests if there is more than 1000 metrics", (done) => {
+		const target_host =  "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		// return the mock twice. In practice, one mock is marked as active,
+		// and one mock is placed in the pending mocks
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.twice()
+			.reply(200);
+
+		const records: MetricRecord[] = [...Array(1001).keys()]
+			.map((v: number)=> {
+				return getTestMetricRecord("metric" + v.toString(), v, {});
+			});
+
+		// before exporting, one mock is active and one is pending
+		expect(scope.activeMocks()).toHaveLength(1);
+		expect(scope.pendingMocks()).toHaveLength(1);
+		exporter.export(records,
+				(result: ExportResult) => {
+					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+
+					// both the active and the pending mocks have been "used up".
+					// This ensures that two requests were sent.
+					expect(scope.activeMocks()).toHaveLength(0);
+					expect(scope.pendingMocks()).toHaveLength(0);
+					done();
+				});
+	});
+
+	function getTestMetricRecord(name: string, value: number, labels: {[key:string]: string}) : MetricRecord {
+		const aggregator = new SumAggregator();
+		aggregator.update(value);
+
+		return {
+			descriptor: {
+				name:name,
+				description: "some desc",
+				unit: "unit",
+				metricKind: MetricKind.UP_DOWN_COUNTER,
+				valueType: ValueType.DOUBLE
+			},
+			labels: labels,
+			aggregator: aggregator,
+			aggregationTemporality: AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA,
+			resource: Resource.EMPTY,
+			instrumentationLibrary: {
+				name: "my-mock-lib"
+			}
+		};
+	}
+});
+

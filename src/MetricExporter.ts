@@ -21,11 +21,14 @@ import * as http from "http";
 import * as https from "https";
 import * as url from "url";
 import { ExporterConfig } from "./types";
-import { getDefaultOneAgentEndpoint, getPayloadLinesLimit } from "./utils/constants";
-import { getOneAgentMetadata } from "./utils/enrichment";
-import { Metric, SummaryValue } from "./utils/metric/metric";
-import { MetricFactory } from "./utils/metric/metric-factory";
-
+import {
+	getDynatraceMetadata,
+	getDefaultOneAgentEndpoint,
+	getPayloadLinesLimit,
+	MetricFactory,
+	Metric,
+	SummaryValue
+} from "@dynatrace/metric-utils";
 
 export class DynatraceMetricExporter implements MetricExporter {
 	private readonly _reqOpts: http.RequestOptions;
@@ -36,20 +39,20 @@ export class DynatraceMetricExporter implements MetricExporter {
 	private _failedNormalizations = 0;
 
 	/**
-   * Constructor
-   * @param config Exporter configuration
-   */
+	 * Constructor
+	 * @param config Exporter configuration
+	 */
 	constructor(config: ExporterConfig = {}) {
 		const defaultDimensions = config.defaultDimensions?.slice() ?? [];
 
-		const oneAgentMetadata = config.dynatraceMetadataEnrichment === false
+		const dynatraceMetadata = config.dynatraceMetadataEnrichment === false
 			? undefined
-			: getOneAgentMetadata();
+			: getDynatraceMetadata();
 
 		this._dtMetricFactory = new MetricFactory({
 			prefix: config.prefix,
 			defaultDimensions: defaultDimensions,
-			oneAgentMetadata
+			staticDimensions: dynatraceMetadata
 		});
 
 		const urlObj = new url.URL(config.url ?? getDefaultOneAgentEndpoint());
@@ -117,11 +120,11 @@ export class DynatraceMetricExporter implements MetricExporter {
 					// TODO: when metrics 0.20.0 is released use aggregator.aggregationTemporality
 					const data = metric.aggregator.toPoint();
 					const normalizedMetric = this._dtMetricFactory
-						.createDeltaCounter(
+						.createCounterDelta(
 							metric.descriptor.name,
 							dimensions,
 							data.value,
-							hrTimeToMilliseconds(data.timestamp)
+							new Date(hrTimeToMilliseconds(data.timestamp))
 						);
 					if (normalizedMetric == null) {
 						this._warnNormalizationFailure(metric.descriptor.name);
@@ -146,7 +149,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 							metric.descriptor.name,
 							dimensions,
 							value,
-							hrTimeToMilliseconds(data.timestamp)
+							new Date(hrTimeToMilliseconds(data.timestamp))
 						);
 					if (normalizedMetric == null) {
 						this._warnNormalizationFailure(metric.descriptor.name);
@@ -160,7 +163,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 							metric.descriptor.name,
 							dimensions,
 							data.value,
-							hrTimeToMilliseconds(data.timestamp)
+							new Date(hrTimeToMilliseconds(data.timestamp))
 						);
 					if (normalizedMetric == null) {
 						this._warnNormalizationFailure(metric.descriptor.name);
