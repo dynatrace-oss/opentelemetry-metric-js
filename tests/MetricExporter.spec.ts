@@ -48,6 +48,10 @@ describe("MetricExporter", () => {
 		expect(exporter["_reqOpts"].path).toEqual("/metrics");
 		expect(exporter["_reqOpts"].protocol).toEqual("http:");
 	});
+
+	test("should throw when created with negative retries", () => {
+		expect(() => new DynatraceMetricExporter({ maxRetries : -1 })).toThrow();
+	});
 });
 
 describe("MetricExporter.export", () => {
