@@ -237,8 +237,10 @@ export class DynatraceMetricExporter implements MetricExporter {
 			diag.error(err.message);
 
 			if (retries < maxRetries) {
-				process.nextTick(() => self._sendRequest(payload, resultCallback, retries + 1),
-					{ code: ExportResultCode.FAILED });
+				// retry after 1000ms.
+				setTimeout(() => process.nextTick(
+					() => self._sendRequest(payload, resultCallback, retries + 1),
+					{ code: ExportResultCode.FAILED }), 1000);
 				return;
 			}
 
