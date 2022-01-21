@@ -50,6 +50,10 @@ export class DynatraceMetricExporter implements MetricExporter {
 			? undefined
 			: getDynatraceMetadata();
 
+		if (config.maxRetries != null && config.maxRetries < 0) {
+			throw new Error("Cannot use retry value < 0");
+		}
+
 		this._maxRetries = config.maxRetries ?? 3;
 
 		this._dtMetricFactory = new MetricFactory({
@@ -232,7 +236,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 		function onError(err: Error) {
 			diag.error(err.message);
 
-			if (retries <= maxRetries) {
+			if (retries < maxRetries) {
 				process.nextTick(() => self._sendRequest(payload, resultCallback, retries + 1),
 					{ code: ExportResultCode.FAILED });
 				return;
