@@ -33,6 +33,7 @@ import {
 export class DynatraceMetricExporter implements MetricExporter {
 	private readonly _reqOpts: http.RequestOptions;
 	private readonly _httpRequest: typeof http.request | typeof https.request;
+	private readonly _maxRetries: number;
 	private _isShutdown = false;
 	private _dtMetricFactory: MetricFactory;
 
@@ -48,6 +49,8 @@ export class DynatraceMetricExporter implements MetricExporter {
 		const dynatraceMetadata = config.dynatraceMetadataEnrichment === false
 			? undefined
 			: getDynatraceMetadata();
+
+		this._maxRetries = config.maxRetries ?? 3;
 
 		this._dtMetricFactory = new MetricFactory({
 			prefix: config.prefix,
@@ -184,13 +187,16 @@ export class DynatraceMetricExporter implements MetricExporter {
 		}
 
 		const payload = lines.join("\n");
+		this._sendRequest(payload, resultCallback, 0);
+	}
 
+	private _sendRequest(payload: string, resultCallback: (result: ExportResult) => void, retries: number) {
 		const request = this._httpRequest(this._reqOpts);
+		const maxRetries = this._maxRetries;
 		const self = this;
 
 		function onResponse(res: http.IncomingMessage) {
 			diag.debug(`request#onResponse: statusCode: ${res.statusCode}`);
-
 
 			res.on("error", e => {
 				// no need for handling a response error as a valid statusCode has
@@ -225,8 +231,14 @@ export class DynatraceMetricExporter implements MetricExporter {
 
 		function onError(err: Error) {
 			diag.error(err.message);
+
+			if (retries <= maxRetries) {
+				process.nextTick(() => self._sendRequest(payload, resultCallback, retries + 1),
+					{ code: ExportResultCode.FAILED });
+				return;
+			}
+
 			process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
-			return;
 		}
 
 		request.on("response", onResponse);

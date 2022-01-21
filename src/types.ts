@@ -53,4 +53,9 @@ export interface ExporterConfig {
 	 * @default true
 	 */
 	dynatraceMetadataEnrichment?: boolean;
+
+	/**
+	 * The number of times the exporter should retry before returning failure (default: 3)
+	 */
+	maxRetries? : number;
 }
