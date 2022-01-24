@@ -197,12 +197,11 @@ export class DynatraceMetricExporter implements MetricExporter {
 		}
 
 		const payload = lines.join("\n");
-		this._sendRequest(payload, resultCallback, 0);
+		this._sendRequest(payload, resultCallback, this._maxRetries);
 	}
 
-	private _sendRequest(payload: string, resultCallback: (result: ExportResult) => void, retries: number) {
+	private _sendRequest(payload: string, resultCallback: (result: ExportResult) => void, remainingRetries: number) {
 		const request = this._httpRequest(this._reqOpts);
-		const maxRetries = this._maxRetries;
 		const self = this;
 
 		function onResponse(res: http.IncomingMessage) {
@@ -242,9 +241,9 @@ export class DynatraceMetricExporter implements MetricExporter {
 		function onError(err: Error) {
 			diag.error(err.message);
 
-			if (retries < maxRetries) {
+			if (remainingRetries > 0) {
 				// retry after the configured time.
-				setTimeout(() => self._sendRequest(payload, resultCallback, retries + 1), self._retryDelay);
+				setTimeout(() => self._sendRequest(payload, resultCallback, remainingRetries - 1), self._retryDelay);
 				return;
 			}
 
