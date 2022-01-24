@@ -58,4 +58,9 @@ export interface ExporterConfig {
 	 * The number of times the exporter should retry before returning failure (default: 3)
 	 */
 	maxRetries? : number;
+
+	/**
+	 * The time in milliseconds to wait before retrying an export that failed due to a connection error (default: 1000)
+	 */
+	retryDelay? : number;
 }

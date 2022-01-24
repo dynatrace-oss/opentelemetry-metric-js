@@ -34,6 +34,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 	private readonly _reqOpts: http.RequestOptions;
 	private readonly _httpRequest: typeof http.request | typeof https.request;
 	private readonly _maxRetries: number;
+	private readonly _retryDelay: number;
 	private _isShutdown = false;
 	private _dtMetricFactory: MetricFactory;
 
@@ -54,7 +55,12 @@ export class DynatraceMetricExporter implements MetricExporter {
 			throw new Error("Cannot use retry value < 0");
 		}
 
+		if (config.retryDelay != null && config.retryDelay < 0) {
+			throw new Error("Cannot use retry delay < 0");
+		}
+
 		this._maxRetries = config.maxRetries ?? 3;
+		this._retryDelay = config.retryDelay ?? 1000;
 
 		this._dtMetricFactory = new MetricFactory({
 			prefix: config.prefix,
@@ -237,10 +243,8 @@ export class DynatraceMetricExporter implements MetricExporter {
 			diag.error(err.message);
 
 			if (retries < maxRetries) {
-				// retry after 1000ms.
-				setTimeout(() => process.nextTick(
-					() => self._sendRequest(payload, resultCallback, retries + 1),
-					{ code: ExportResultCode.FAILED }), 1000);
+				// retry after the configured time.
+				setTimeout(() => self._sendRequest(payload, resultCallback, retries + 1), self._retryDelay);
 				return;
 			}
 
