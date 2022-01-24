@@ -70,7 +70,7 @@ describe("MetricExporter.export", () => {
 
 
 		// if this request is not received with a body matching the regex below,
-		// a non-success error code will be returned, making the expect call below
+		// the call will fail without an error code, making the expect call below
 		// fail.
 		const scope: nock.Scope = nock(target_host)
 			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
@@ -100,9 +100,8 @@ describe("MetricExporter.export", () => {
 					url: target_url
 				});
 
-
 				// if this request is not received with a body matching the regex below,
-				// a non-success error code will be returned, making the expect call below
+				// the call will fail without an error code, making the expect call below
 				// fail.
 				const scope: nock.Scope = nock(target_host)
 					.post(target_path, /test,key=value count,delta=10 \d{13}/g)
@@ -133,9 +132,7 @@ describe("MetricExporter.export", () => {
 			maxRetries: 3
 		});
 
-		// if this request is not received with a body matching the regex below,
-		// a non-success error code will be returned, making the expect call below
-		// fail.
+		// returning an error without an error code will force the "error" event on the request.
 		const scope: nock.Scope = nock(target_host)
 			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
 			.replyWithError({})
