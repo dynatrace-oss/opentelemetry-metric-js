@@ -22,7 +22,6 @@ import { ExportResult, ExportResultCode } from "@opentelemetry/core";
 import { Resource } from "@opentelemetry/resources";
 
 
-
 describe("MetricExporter", () => {
 	test("should default to oneagent endpoint", () => {
 		const exporter = new DynatraceMetricExporter();
@@ -48,13 +47,21 @@ describe("MetricExporter", () => {
 		expect(exporter["_reqOpts"].path).toEqual("/metrics");
 		expect(exporter["_reqOpts"].protocol).toEqual("http:");
 	});
+
+	test("should throw when created with negative retries", () => {
+		expect(() => new DynatraceMetricExporter({ maxRetries: -1 })).toThrow();
+	});
+
+	test("should throw when created with negative retry delay", () => {
+		expect(() => new DynatraceMetricExporter({ retryDelay: -1 })).toThrow();
+	});
 });
 
 describe("MetricExporter.export", () => {
 	beforeEach(() => nock.cleanAll());
 
 	test("should export metrics and return a success message", (done) => {
-		const target_host =  "https://example.com:8080";
+		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
 		const exporter = new DynatraceMetricExporter({
@@ -63,7 +70,7 @@ describe("MetricExporter.export", () => {
 
 
 		// if this request is not received with a body matching the regex below,
-		// a non-success error code will be returned, making the expect call below
+		// the call will fail without an error code, making the expect call below
 		// fail.
 		const scope: nock.Scope = nock(target_host)
 			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
@@ -82,8 +89,75 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
+	describe.each([100, 300, 401, 403, 500])(
+		"with status code %d",
+		(responseCode: number) => {
+			test("should return a failure message", (done => {
+				const target_host = "https://example.com:8080";
+				const target_path = "/metrics";
+				const target_url = target_host + target_path;
+				const exporter = new DynatraceMetricExporter({
+					url: target_url
+				});
+
+				// if this request is not received with a body matching the regex below,
+				// the call will fail without an error code, making the expect call below
+				// fail.
+				const scope: nock.Scope = nock(target_host)
+					.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+					.once()
+					.reply(responseCode);
+
+				const rec: MetricRecord = getTestMetricRecord("test", 10, { "key": "value" });
+
+				exporter.export([rec],
+					(result: ExportResult) => {
+						expect(result.code).toEqual(ExportResultCode.FAILED);
+						// the request was sent once, no pending mocks are available
+						expect(scope.activeMocks()).toHaveLength(0);
+						expect(scope.pendingMocks()).toHaveLength(0);
+						done();
+					});
+				done();
+			}));
+		}
+	);
+
+	test("should retry on connection error", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url,
+			maxRetries: 3
+		});
+
+		// returning an error without an error code will force the "error" event on the request.
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.replyWithError({})
+			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.replyWithError({})
+			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.replyWithError({})
+			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.replyWithError({});
+
+		const rec: MetricRecord = getTestMetricRecord("test", 10, { "key": "value" });
+
+		exporter.export([rec],
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.FAILED);
+
+				// the request was sent four times, no pending mocks are available
+				expect(scope.activeMocks()).toStrictEqual([]);
+				expect(scope.pendingMocks()).toStrictEqual([]);
+				done();
+			});
+	});
+
 	test("should send request after normalizing metric name", (done) => {
-		const target_host =  "https://example.com:8080";
+		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
 		const exporter = new DynatraceMetricExporter({
@@ -98,16 +172,16 @@ describe("MetricExporter.export", () => {
 		const rec: MetricRecord = getTestMetricRecord("~!@", 10, {});
 
 		exporter.export([rec],
-				(result: ExportResult) => {
-					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-					expect(scope.activeMocks()).toHaveLength(0);
-					expect(scope.pendingMocks()).toHaveLength(0);
-					done();
-				});
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
 	});
 
 	test("should return success on empty list but not send the request", (done) => {
-		const target_host =  "https://example.com:8080";
+		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
 		const exporter = new DynatraceMetricExporter({
@@ -119,17 +193,19 @@ describe("MetricExporter.export", () => {
 			.reply(200);
 
 		// if a request is sent, the test will fail.
-		scope.addListener("replied", () => { fail("a request was sent when no request should have been sent"); });
+		scope.addListener("replied", () => {
+			fail("a request was sent when no request should have been sent");
+		});
 
 		exporter.export([],
-				(result: ExportResult) => {
-					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-					done();
-				});
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				done();
+			});
 	});
 
 	test("should skip invalid metric and not send request", (done) => {
-		const target_host =  "https://example.com:8080";
+		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
 		const exporter = new DynatraceMetricExporter({
@@ -141,19 +217,21 @@ describe("MetricExporter.export", () => {
 			.reply(200);
 
 		// if a request is sent, the test will fail.
-		scope.addListener("replied", () => { fail("a request was sent when no request should have been sent"); });
+		scope.addListener("replied", () => {
+			fail("a request was sent when no request should have been sent");
+		});
 
 		const rec: MetricRecord = getTestMetricRecord("", 12, {});
 
 		exporter.export([rec],
-				(result: ExportResult) => {
-					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-					done();
-				});
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				done();
+			});
 	});
 
 	test("should skip invalid metric and send only valid metrics", (done) => {
-		const target_host =  "https://example.com:8080";
+		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
 		const exporter = new DynatraceMetricExporter({
@@ -167,21 +245,21 @@ describe("MetricExporter.export", () => {
 
 		const records = [
 			getTestMetricRecord("", 12, {}),		// invalid
-			getTestMetricRecord("valid", 13,{})	// valid
+			getTestMetricRecord("valid", 13, {})	// valid
 		];
 
 		exporter.export(records,
-				(result: ExportResult) => {
-					expect(result.code).toEqual(ExportResultCode.SUCCESS);
-					// the one available active mock has been used, therefore the request was sent.
-					expect(scope.activeMocks()).toHaveLength(0);
-					expect(scope.pendingMocks()).toHaveLength(0);
-					done();
-				});
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// the one available active mock has been used, therefore the request was sent.
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
 	});
 
 	test("should send two requests if there is more than 1000 metrics", (done) => {
-		const target_host =  "https://example.com:8080";
+		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
 		const exporter = new DynatraceMetricExporter({
@@ -196,7 +274,7 @@ describe("MetricExporter.export", () => {
 			.reply(200);
 
 		const records: MetricRecord[] = [...Array(1001).keys()]
-			.map((v: number)=> {
+			.map((v: number) => {
 				return getTestMetricRecord("metric" + v.toString(), v, {});
 			});
 
@@ -204,24 +282,24 @@ describe("MetricExporter.export", () => {
 		expect(scope.activeMocks()).toHaveLength(1);
 		expect(scope.pendingMocks()).toHaveLength(1);
 		exporter.export(records,
-				(result: ExportResult) => {
-					expect(result.code).toEqual(ExportResultCode.SUCCESS);
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 
-					// both the active and the pending mocks have been "used up".
-					// This ensures that two requests were sent.
-					expect(scope.activeMocks()).toHaveLength(0);
-					expect(scope.pendingMocks()).toHaveLength(0);
-					done();
-				});
+				// both the active and the pending mocks have been "used up".
+				// This ensures that two requests were sent.
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
 	});
 
-	function getTestMetricRecord(name: string, value: number, labels: {[key:string]: string}) : MetricRecord {
+	function getTestMetricRecord(name: string, value: number, labels: { [key: string]: string }): MetricRecord {
 		const aggregator = new SumAggregator();
 		aggregator.update(value);
 
 		return {
 			descriptor: {
-				name:name,
+				name: name,
 				description: "some desc",
 				unit: "unit",
 				metricKind: MetricKind.UP_DOWN_COUNTER,

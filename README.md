@@ -139,6 +139,16 @@ metric key, separated by a dot (`<prefix>.<namespace>.<name>`).
 The `defaultDimensions` parameter can be used to optionally specify a list of key/value
 pairs, which will be added as additional labels/dimensions to all data points.
 
+#### Retries on Connection Failure
+
+The `maxRetries` parameter can be used to set the amount of times the exporter should
+retry on connection failures. By default, the exporter will retry 3 times before
+marking the batch as failed. This number must be greater than or equal to 0.
+
+The `retryDelay` parameter can be used to set the time in milliseconds to wait until
+re-trying an export after a connection failure, the default is 1000ms. This number
+must be greater than or equal to 0.
+
 ## Dynatrace Metadata Enrichment
 
 If running on a host with a running OneAgent, the exporter will export metadata

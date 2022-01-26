@@ -33,6 +33,8 @@ import {
 export class DynatraceMetricExporter implements MetricExporter {
 	private readonly _reqOpts: http.RequestOptions;
 	private readonly _httpRequest: typeof http.request | typeof https.request;
+	private readonly _maxRetries: number;
+	private readonly _retryDelay: number;
 	private _isShutdown = false;
 	private _dtMetricFactory: MetricFactory;
 
@@ -48,6 +50,17 @@ export class DynatraceMetricExporter implements MetricExporter {
 		const dynatraceMetadata = config.dynatraceMetadataEnrichment === false
 			? undefined
 			: getDynatraceMetadata();
+
+		if (config.maxRetries != null && config.maxRetries < 0) {
+			throw new Error("Cannot use retry value < 0");
+		}
+
+		if (config.retryDelay != null && config.retryDelay < 0) {
+			throw new Error("Cannot use retry delay < 0");
+		}
+
+		this._maxRetries = config.maxRetries ?? 3;
+		this._retryDelay = config.retryDelay ?? 1000;
 
 		this._dtMetricFactory = new MetricFactory({
 			prefix: config.prefix,
@@ -184,13 +197,15 @@ export class DynatraceMetricExporter implements MetricExporter {
 		}
 
 		const payload = lines.join("\n");
+		this._sendRequest(payload, resultCallback, this._maxRetries);
+	}
 
+	private _sendRequest(payload: string, resultCallback: (result: ExportResult) => void, remainingRetries: number) {
 		const request = this._httpRequest(this._reqOpts);
 		const self = this;
 
 		function onResponse(res: http.IncomingMessage) {
 			diag.debug(`request#onResponse: statusCode: ${res.statusCode}`);
-
 
 			res.on("error", e => {
 				// no need for handling a response error as a valid statusCode has
@@ -225,8 +240,14 @@ export class DynatraceMetricExporter implements MetricExporter {
 
 		function onError(err: Error) {
 			diag.error(err.message);
+
+			if (remainingRetries > 0) {
+				// retry after the configured time.
+				setTimeout(() => self._sendRequest(payload, resultCallback, remainingRetries - 1), self._retryDelay);
+				return;
+			}
+
 			process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
-			return;
 		}
 
 		request.on("response", onResponse);
