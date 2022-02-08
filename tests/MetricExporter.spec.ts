@@ -16,7 +16,7 @@
 
 import { DynatraceMetricExporter } from "../src";
 import * as nock from "nock";
-import { MetricKind, MetricRecord, SumAggregator } from "@opentelemetry/metrics";
+import { MetricKind, MetricRecord, SumAggregator } from "@opentelemetry/sdk-metrics-base";
 import { AggregationTemporality, ValueType } from "@opentelemetry/api-metrics";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";
 import { Resource } from "@opentelemetry/resources";
@@ -293,7 +293,7 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
-	function getTestMetricRecord(name: string, value: number, labels: { [key: string]: string }): MetricRecord {
+	function getTestMetricRecord(name: string, value: number, attributes: { [key: string]: string }): MetricRecord {
 		const aggregator = new SumAggregator();
 		aggregator.update(value);
 
@@ -305,7 +305,7 @@ describe("MetricExporter.export", () => {
 				metricKind: MetricKind.UP_DOWN_COUNTER,
 				valueType: ValueType.DOUBLE
 			},
-			labels: labels,
+			attributes: attributes,
 			aggregator: aggregator,
 			aggregationTemporality: AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA,
 			resource: Resource.EMPTY,

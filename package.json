@@ -1,7 +1,7 @@
 {
   "name": "@dynatrace/opentelemetry-exporter-metrics",
   "description": "OpenTelemetry metrics exporter for Dynatrace",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "Dynatrace",
   "license": "Apache-2",
   "publishConfig": {
@@ -30,19 +30,17 @@
   },
   "homepage": "https://github.com/dynatrace-oss/opentelemetry-metrics-js#readme",
   "dependencies": {
-    "@dynatrace/metric-utils": "^0.1.0",
-    "@opentelemetry/core": "^0.23.0",
-    "@opentelemetry/metrics": "^0.23.0"
+    "@dynatrace/metric-utils": "0.1.0",
+    "@opentelemetry/core": "1.0.1",
+    "@opentelemetry/sdk-metrics-base": "0.27.0"
   },
   "peerDependencies": {
-    "@opentelemetry/api": "1.0.1"
+    "@opentelemetry/api": "1.0.4"
   },
   "devDependencies": {
-    "@opentelemetry/api": "1.0.1",
-    "@opentelemetry/api-metrics": "^0.23.0",
-    "@opentelemetry/core": "^0.23.0",
-    "@opentelemetry/metrics": "^0.23.0",
-    "@opentelemetry/resources": "^0.23.0",
+    "@opentelemetry/api": "^1.0.4",
+    "@opentelemetry/api-metrics": "^0.27.0",
+    "@opentelemetry/resources": "^1.0.1",
     "@types/jest": "^27.0.2",
     "@types/mock-fs": "^4.13.1",
     "@types/node": "^16.3.2",
