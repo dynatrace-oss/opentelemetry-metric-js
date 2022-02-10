@@ -134,7 +134,7 @@ The scope required for sending metrics is the `Ingest metrics` scope in the
 The `prefix` parameter specifies an optional prefix, which is prepended to each
 metric key, separated by a dot (`<prefix>.<namespace>.<name>`).
 
-#### Default Labels/Dimensions
+#### Default Attributes/Dimensions
 
 The `defaultDimensions` parameter can be used to optionally specify a list of key/value
 pairs, which will be added as additional attributes/dimensions to all data points.
