@@ -29,6 +29,7 @@ import {
 	Metric,
 	SummaryValue
 } from "@dynatrace/metric-utils";
+import { AggregationTemporality } from "@opentelemetry/api-metrics";
 
 export class DynatraceMetricExporter implements MetricExporter {
 	private readonly _reqOpts: http.RequestOptions;
@@ -130,7 +131,10 @@ export class DynatraceMetricExporter implements MetricExporter {
 			const dimensions = Object.entries(metric.attributes).map(([key, value]) => ({ key, value }));
 			switch (metric.aggregator.kind) {
 				case AggregatorKind.SUM: {
-					// TODO: when metrics 0.20.0 is released use aggregator.aggregationTemporality
+					if (metric.aggregationTemporality !== AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA) {
+						diag.warn(`Aggregation temporality ${AggregationTemporality[metric.aggregationTemporality]} unsupported for metric ${metric.descriptor.name}`);
+						return null;
+					}
 					const data = metric.aggregator.toPoint();
 					const normalizedMetric = this._dtMetricFactory
 						.createCounterDelta(
