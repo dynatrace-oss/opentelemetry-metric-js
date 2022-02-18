@@ -16,10 +16,11 @@
 
 import { DynatraceMetricExporter } from "../src";
 import * as nock from "nock";
-import { MetricKind, MetricRecord, SumAggregator } from "@opentelemetry/metrics";
+import { MetricKind, MetricRecord, SumAggregator } from "@opentelemetry/sdk-metrics-base";
 import { AggregationTemporality, ValueType } from "@opentelemetry/api-metrics";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";
 import { Resource } from "@opentelemetry/resources";
+import * as sinon from "sinon";
 
 
 describe("MetricExporter", () => {
@@ -87,6 +88,26 @@ describe("MetricExporter.export", () => {
 				expect(scope.pendingMocks()).toHaveLength(0);
 				done();
 			});
+	});
+
+	test("should drop cumulative sums but not delta sums", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const spy = exporter["_sendRequest"] = sinon.stub().callsFake((_, cb: (code: ExportResultCode) => void) => cb(ExportResultCode.SUCCESS));
+
+		exporter.export([
+			getTestMetricRecord("delta_test", 10, { "key": "value" }),
+			getTestMetricRecord("cumulative_test", 10, { "key": "value" }, AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE)
+		], () => {
+			sinon.assert.calledOnce(spy);
+			expect(spy.getCalls()[0].firstArg).toMatch(/^delta_test,key=value count,delta=10 \d{13}$/);
+			done();
+		});
 	});
 
 	describe.each([100, 300, 401, 403, 500])(
@@ -293,7 +314,7 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
-	function getTestMetricRecord(name: string, value: number, labels: { [key: string]: string }): MetricRecord {
+	function getTestMetricRecord(name: string, value: number, attributes: { [key: string]: string }, temporality = AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA): MetricRecord {
 		const aggregator = new SumAggregator();
 		aggregator.update(value);
 
@@ -305,9 +326,9 @@ describe("MetricExporter.export", () => {
 				metricKind: MetricKind.UP_DOWN_COUNTER,
 				valueType: ValueType.DOUBLE
 			},
-			labels: labels,
+			attributes: attributes,
 			aggregator: aggregator,
-			aggregationTemporality: AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA,
+			aggregationTemporality: temporality,
 			resource: Resource.EMPTY,
 			instrumentationLibrary: {
 				name: "my-mock-lib"

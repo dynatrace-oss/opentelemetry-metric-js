@@ -1,7 +1,7 @@
 'use strict';
 
 const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
-const { MeterProvider } = require('@opentelemetry/metrics');
+const { MeterProvider } = require('@opentelemetry/sdk-metrics-base');
 const { DynatraceMetricExporter } = require('..');
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
@@ -27,10 +27,10 @@ const upDownCounter = meter.createUpDownCounter('test_up_down_counter', {
   description: 'Example of a UpDownCounter',
 });
 
-const labels = { pid: process.pid, environment: 'staging' };
+const attributes = { pid: process.pid, environment: 'staging' };
 
 
 setInterval(() => {
-  requestCounter.bind(labels).add(1);
-  upDownCounter.bind(labels).add(Math.random() > 0.5 ? 1 : -1);
+  requestCounter.bind(attributes).add(1);
+  upDownCounter.bind(attributes).add(Math.random() > 0.5 ? 1 : -1);
 }, 1000);

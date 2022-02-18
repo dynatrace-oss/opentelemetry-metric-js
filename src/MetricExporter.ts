@@ -16,7 +16,7 @@
 
 import { diag } from "@opentelemetry/api";
 import { ExportResult, ExportResultCode, hrTimeToMilliseconds } from "@opentelemetry/core";
-import { AggregatorKind, MetricExporter, MetricRecord } from "@opentelemetry/metrics";
+import { AggregatorKind, MetricExporter, MetricRecord } from "@opentelemetry/sdk-metrics-base";
 import * as http from "http";
 import * as https from "https";
 import * as url from "url";
@@ -29,6 +29,7 @@ import {
 	Metric,
 	SummaryValue
 } from "@dynatrace/metric-utils";
+import { AggregationTemporality } from "@opentelemetry/api-metrics";
 
 export class DynatraceMetricExporter implements MetricExporter {
 	private readonly _reqOpts: http.RequestOptions;
@@ -127,10 +128,13 @@ export class DynatraceMetricExporter implements MetricExporter {
 		}
 
 		const dtMetrics = metrics.map((metric) => {
-			const dimensions = Object.entries(metric.labels).map(([key, value]) => ({ key, value }));
+			const dimensions = Object.entries(metric.attributes).map(([key, value]) => ({ key, value }));
 			switch (metric.aggregator.kind) {
 				case AggregatorKind.SUM: {
-					// TODO: when metrics 0.20.0 is released use aggregator.aggregationTemporality
+					if (metric.aggregationTemporality !== AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA) {
+						diag.warn(`Aggregation temporality ${AggregationTemporality[metric.aggregationTemporality]} unsupported for metric ${metric.descriptor.name}`);
+						return null;
+					}
 					const data = metric.aggregator.toPoint();
 					const normalizedMetric = this._dtMetricFactory
 						.createCounterDelta(
