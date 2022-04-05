@@ -136,6 +136,18 @@ export class DynatraceMetricExporter implements MetricExporter {
 						return null;
 					}
 					const data = metric.aggregator.toPoint();
+
+					const valueType = typeof data.value;
+					if (valueType !== "number") {
+						diag.warn(`Metric ${metric.descriptor.name} has invalid data.value type ${valueType}`);
+						return null;
+					}
+
+					if (!isFinite(data.value)) {
+						diag.warn(`Metric ${metric.descriptor.name} has non-finite value`);
+						return null;
+					}
+
 					const normalizedMetric = this._dtMetricFactory
 						.createCounterDelta(
 							metric.descriptor.name,
@@ -175,6 +187,17 @@ export class DynatraceMetricExporter implements MetricExporter {
 				}
 				case AggregatorKind.LAST_VALUE: {
 					const data = metric.aggregator.toPoint();
+					const valueType = typeof data.value;
+					if (valueType !== "number") {
+						diag.warn(`Metric ${metric.descriptor.name} has invalid data.value type ${valueType}`);
+						return null;
+					}
+
+					if (!isFinite(data.value)) {
+						diag.warn(`Metric ${metric.descriptor.name} has non-finite value`);
+						return null;
+					}
+
 					const normalizedMetric = this._dtMetricFactory
 						.createGauge(
 							metric.descriptor.name,
