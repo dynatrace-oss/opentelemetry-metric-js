@@ -1,7 +1,7 @@
 {
   "name": "@dynatrace/opentelemetry-exporter-metrics",
   "description": "OpenTelemetry metrics exporter for Dynatrace",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": "Dynatrace",
   "license": "Apache-2",
   "publishConfig": {
@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/dynatrace-oss/opentelemetry-metrics-js#readme",
   "dependencies": {
-    "@dynatrace/metric-utils": "0.1.0",
+    "@dynatrace/metric-utils": "0.1.1",
     "@opentelemetry/core": "1.0.1",
     "@opentelemetry/sdk-metrics-base": "0.27.0"
   },
