@@ -16,11 +16,10 @@
 
 import { DynatraceMetricExporter } from "../src";
 import * as nock from "nock";
-import { MetricKind, MetricRecord, SumAggregator } from "@opentelemetry/sdk-metrics-base";
-import { AggregationTemporality, ValueType } from "@opentelemetry/api-metrics";
+import { MetricAttributes, ValueType } from "@opentelemetry/api-metrics";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";
 import { Resource } from "@opentelemetry/resources";
-import * as sinon from "sinon";
+import { AggregationTemporality, DataPointType, InstrumentType, ResourceMetrics } from "@opentelemetry/sdk-metrics-base";
 
 
 describe("MetricExporter", () => {
@@ -61,6 +60,37 @@ describe("MetricExporter", () => {
 describe("MetricExporter.export", () => {
 	beforeEach(() => nock.cleanAll());
 
+	function getResourceMetric(name: string, value: number, attributes: MetricAttributes): ResourceMetrics {
+		return {
+			resource: new Resource({}),
+			scopeMetrics: [{
+				scope: {
+					name: "myscope"
+				},
+				metrics: [
+					{
+						aggregationTemporality: AggregationTemporality.DELTA,
+						dataPointType: DataPointType.SINGULAR,
+						descriptor: {
+							description: "a data point",
+							name,
+							type: InstrumentType.COUNTER,
+							unit: "",
+							valueType: ValueType.DOUBLE
+						},
+						dataPoints: [{
+							attributes,
+							endTime: [0, 0],
+							startTime: [0, 0],
+							value
+						}]
+					}
+				]
+			}]
+		};
+	}
+
+
 	test("should export metrics and return a success message", (done) => {
 		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
@@ -69,18 +99,15 @@ describe("MetricExporter.export", () => {
 			url: target_url
 		});
 
-
 		// if this request is not received with a body matching the regex below,
 		// the call will fail without an error code, making the expect call below
 		// fail.
 		const scope: nock.Scope = nock(target_host)
-			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.post(target_path, /test,key=value count,delta=10/g)
 			.once()
 			.reply(200);
 
-		const rec: MetricRecord = getTestMetricRecord("test", 10, { "key": "value" });
-
-		exporter.export([rec],
+		exporter.export(getResourceMetric("test", 10, { key: "value" }),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				// the request was sent once, no pending mocks are available
@@ -88,26 +115,6 @@ describe("MetricExporter.export", () => {
 				expect(scope.pendingMocks()).toHaveLength(0);
 				done();
 			});
-	});
-
-	test("should drop cumulative sums but not delta sums", (done) => {
-		const target_host = "https://example.com:8080";
-		const target_path = "/metrics";
-		const target_url = target_host + target_path;
-		const exporter = new DynatraceMetricExporter({
-			url: target_url
-		});
-
-		const spy = exporter["_sendRequest"] = sinon.stub().callsFake((_, cb: (code: ExportResultCode) => void) => cb(ExportResultCode.SUCCESS));
-
-		exporter.export([
-			getTestMetricRecord("delta_test", 10, { "key": "value" }),
-			getTestMetricRecord("cumulative_test", 10, { "key": "value" }, AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE)
-		], () => {
-			sinon.assert.calledOnce(spy);
-			expect(spy.getCalls()[0].firstArg).toMatch(/^delta_test,key=value count,delta=10 \d{13}$/);
-			done();
-		});
 	});
 
 	describe.each([100, 300, 401, 403, 500])(
@@ -125,13 +132,11 @@ describe("MetricExporter.export", () => {
 				// the call will fail without an error code, making the expect call below
 				// fail.
 				const scope: nock.Scope = nock(target_host)
-					.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+					.post(target_path, /test,key=value count,delta=10/g)
 					.once()
 					.reply(responseCode);
 
-				const rec: MetricRecord = getTestMetricRecord("test", 10, { "key": "value" });
-
-				exporter.export([rec],
+				exporter.export(getResourceMetric("test", 10, { key: "value" }),
 					(result: ExportResult) => {
 						expect(result.code).toEqual(ExportResultCode.FAILED);
 						// the request was sent once, no pending mocks are available
@@ -155,18 +160,16 @@ describe("MetricExporter.export", () => {
 
 		// returning an error without an error code will force the "error" event on the request.
 		const scope: nock.Scope = nock(target_host)
-			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.post(target_path, /test,key=value count,delta=10/g)
 			.replyWithError({})
-			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.post(target_path, /test,key=value count,delta=10/g)
 			.replyWithError({})
-			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.post(target_path, /test,key=value count,delta=10/g)
 			.replyWithError({})
-			.post(target_path, /test,key=value count,delta=10 \d{13}/g)
+			.post(target_path, /test,key=value count,delta=10/g)
 			.replyWithError({});
 
-		const rec: MetricRecord = getTestMetricRecord("test", 10, { "key": "value" });
-
-		exporter.export([rec],
+		exporter.export(getResourceMetric("test", 10, { key: "value" }),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.FAILED);
 
@@ -186,13 +189,11 @@ describe("MetricExporter.export", () => {
 		});
 
 		const scope: nock.Scope = nock(target_host)
-			.post(target_path, /_ count,delta=10 /)
+			.post(target_path, /_ count,delta=10/)
 			.once()
 			.reply(200);
 
-		const rec: MetricRecord = getTestMetricRecord("~!@", 10, {});
-
-		exporter.export([rec],
+		exporter.export(getResourceMetric("~!@", 10, {}),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				expect(scope.activeMocks()).toHaveLength(0);
@@ -201,7 +202,7 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
-	test("should return success on empty list but not send the request", (done) => {
+	test("should return success on empty metric record but not send the request", (done) => {
 		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -218,7 +219,26 @@ describe("MetricExporter.export", () => {
 			fail("a request was sent when no request should have been sent");
 		});
 
-		exporter.export([],
+		exporter.export({
+			resource: new Resource({}),
+			scopeMetrics: [{
+				scope: { name: "empty" },
+				metrics: [
+					{
+						aggregationTemporality: AggregationTemporality.DELTA,
+						dataPointType: DataPointType.SINGULAR,
+						descriptor: {
+							description: "empty metric",
+							name: "metric_name",
+							type: InstrumentType.COUNTER,
+							unit: "",
+							valueType: ValueType.DOUBLE
+						},
+						dataPoints: []
+					}
+				]
+			}]
+		},
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				done();
@@ -242,9 +262,35 @@ describe("MetricExporter.export", () => {
 			fail("a request was sent when no request should have been sent");
 		});
 
-		const rec: MetricRecord = getTestMetricRecord("", 12, {});
-
-		exporter.export([rec],
+		exporter.export({
+			resource: new Resource({}),
+			scopeMetrics: [{
+				scope: {
+					name: "myscope"
+				},
+				metrics: [
+					{
+						aggregationTemporality: AggregationTemporality.DELTA,
+						dataPointType: DataPointType.SINGULAR,
+						descriptor: {
+							description: "invalid data point (empty name)",
+							name: "",
+							type: InstrumentType.COUNTER,
+							unit: "",
+							valueType: ValueType.DOUBLE
+						},
+						dataPoints: [{
+							attributes: {
+								key: "value"
+							},
+							endTime: [0, 0],
+							startTime: [0, 0],
+							value: 10
+						}]
+					}
+				]
+			}]
+		},
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				done();
@@ -260,16 +306,56 @@ describe("MetricExporter.export", () => {
 		});
 
 		const scope: nock.Scope = nock(target_host)
-			.post(target_path, /valid count,delta=13 \d{13}/)
+			.post(target_path, /valid count,delta=13/)
 			.once()
 			.reply(200);
 
-		const records = [
-			getTestMetricRecord("", 12, {}),		// invalid
-			getTestMetricRecord("valid", 13, {})	// valid
-		];
-
-		exporter.export(records,
+		exporter.export({
+			resource: new Resource({}),
+			scopeMetrics: [{
+				scope: {
+					name: "myscope"
+				},
+				metrics: [
+					{
+						aggregationTemporality: AggregationTemporality.DELTA,
+						dataPointType: DataPointType.SINGULAR,
+						descriptor: {
+							description: "invalid data point (empty name)",
+							name: "",
+							type: InstrumentType.COUNTER,
+							unit: "",
+							valueType: ValueType.DOUBLE
+						},
+						dataPoints: [{
+							attributes: {
+								key: "value"
+							},
+							endTime: [0, 0],
+							startTime: [0, 0],
+							value: 10
+						}]
+					},
+					{
+						aggregationTemporality: AggregationTemporality.DELTA,
+						dataPointType: DataPointType.SINGULAR,
+						descriptor: {
+							description: "valid data point",
+							name: "valid",
+							type: InstrumentType.COUNTER,
+							unit: "",
+							valueType: ValueType.DOUBLE
+						},
+						dataPoints: [{
+							attributes: {},
+							endTime: [0, 0],
+							startTime: [0, 0],
+							value: 13
+						}]
+					}
+				]
+			}]
+		},
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				// the one available active mock has been used, therefore the request was sent.
@@ -294,10 +380,32 @@ describe("MetricExporter.export", () => {
 			.twice()
 			.reply(200);
 
-		const records: MetricRecord[] = [...Array(1001).keys()]
-			.map((v: number) => {
-				return getTestMetricRecord("metric" + v.toString(), v, {});
-			});
+
+		const records: ResourceMetrics = {
+			resource: new Resource({}),
+			scopeMetrics: [{
+				scope: {
+					name: "myscope"
+				},
+				metrics: [...Array(1001).keys()].map((v: number) => ({
+					aggregationTemporality: AggregationTemporality.DELTA,
+					dataPointType: DataPointType.SINGULAR,
+					descriptor: {
+						description: "a data point",
+						name: "metric" + v.toString(),
+						type: InstrumentType.COUNTER,
+						unit: "",
+						valueType: ValueType.DOUBLE
+					},
+					dataPoints: [{
+						attributes: {},
+						endTime: [0, 0],
+						startTime: [0, 0],
+						value: v
+					}]
+				}))
+			}]
+		};
 
 		// before exporting, one mock is active and one is pending
 		expect(scope.activeMocks()).toHaveLength(1);
@@ -313,27 +421,5 @@ describe("MetricExporter.export", () => {
 				done();
 			});
 	});
-
-	function getTestMetricRecord(name: string, value: number, attributes: { [key: string]: string }, temporality = AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA): MetricRecord {
-		const aggregator = new SumAggregator();
-		aggregator.update(value);
-
-		return {
-			descriptor: {
-				name: name,
-				description: "some desc",
-				unit: "unit",
-				metricKind: MetricKind.UP_DOWN_COUNTER,
-				valueType: ValueType.DOUBLE
-			},
-			attributes: attributes,
-			aggregator: aggregator,
-			aggregationTemporality: temporality,
-			resource: Resource.EMPTY,
-			instrumentationLibrary: {
-				name: "my-mock-lib"
-			}
-		};
-	}
 });
 
