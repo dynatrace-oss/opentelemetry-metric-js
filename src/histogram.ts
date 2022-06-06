@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 Dynatrace LLC
+	Copyright 2022 Dynatrace LLC
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 import { SummaryValue } from "@dynatrace/metric-utils";
 import { DataPoint, Histogram } from "@opentelemetry/sdk-metrics-base";
 
-export function estimateHistogram(point: DataPoint<Histogram>): SummaryValue | null {
+export function estimateHistogram(point: DataPoint<Histogram>): SummaryValue {
 	if (point.value.count === 0) {
-		return null;
+		return { count: 0, sum: 0, min: 0, max: 0 };
 	}
 
 	const { min, max } = estimateHistMinMax(point);

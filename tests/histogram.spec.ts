@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 Dynatrace LLC
+	Copyright 2022 Dynatrace LLC
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -145,15 +145,6 @@ describe("estimateHistogram", () => {
 				sum: -7.5,
 				expectedMax: -2.5
 			}
-			// TODO right now the estimation returns null and this is skipped.
-			// should we not skip it?
-			// {
-			// 	description: "No bucket has a value. Use the sum.",
-			// 	boundaries: [1, 2, 3, 4, 5],
-			// 	counts: [0,0,0,0,0,0],
-			// 	sum: 10.2,
-			// 	expectedMax: 10.2
-			// }
 		];
 
 		for (const testCase of cases) {

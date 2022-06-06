@@ -89,12 +89,12 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 
 	selectAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality {
 		switch (instrumentType) {
-			case InstrumentType.COUNTER:
-			case InstrumentType.HISTOGRAM:
-			case InstrumentType.OBSERVABLE_COUNTER:
-				return AggregationTemporality.DELTA;
-			default:
+			case InstrumentType.OBSERVABLE_GAUGE:
+			case InstrumentType.OBSERVABLE_UP_DOWN_COUNTER:
+			case InstrumentType.UP_DOWN_COUNTER:
 				return AggregationTemporality.CUMULATIVE;
+			default:
+				return AggregationTemporality.DELTA;
 		}
 	}
 
@@ -235,10 +235,6 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		return Promise.resolve();
 	}
 
-	getPreferredAggregationTemporality(): AggregationTemporality {
-		return AggregationTemporality.DELTA;
-	}
-
 	private serializeCounter(metric: MetricData): string[] {
 		const out: string[] = [];
 		if (metric.dataPointType !== DataPointType.SINGULAR) {
@@ -262,10 +258,6 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		}
 
 		for (const point of metric.dataPoints) {
-			if (point.value.count === 0) {
-				continue;
-			}
-
 			const summaryValue = estimateHistogram(point);
 
 			if (summaryValue == null) {
