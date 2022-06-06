@@ -15,6 +15,8 @@ let exporter = new DynatraceMetricExporter({
   // APIToken: '<load API token from secure location such as env or config file>'
 });
 
+
+// You can use the ConsoleExporter for testing locally
 // exporter = new ConsoleMetricExporter(AggregationTemporality.DELTA);
 
 const provider = new MeterProvider({ resource: new Resource({ 'service.name': 'opentelemetry-metrics-sample-dynatrace' }) });
