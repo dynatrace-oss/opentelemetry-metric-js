@@ -112,13 +112,13 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 			return;
 		}
 
-		const lines: string[] = [];
+		let lines: string[] = [];
 		for (const scopeMetric of metrics.scopeMetrics) {
 			for (const metric of scopeMetric.metrics) {
 				switch (metric.descriptor.type) {
 					case InstrumentType.COUNTER:
 					case InstrumentType.OBSERVABLE_COUNTER:
-						lines.push(...this.serializeCounter(metric));
+						lines = lines.concat(this.serializeCounter(metric));
 						break;
 					case InstrumentType.OBSERVABLE_GAUGE:
 					case InstrumentType.UP_DOWN_COUNTER:
