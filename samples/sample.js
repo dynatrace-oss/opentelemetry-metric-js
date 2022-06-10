@@ -12,7 +12,7 @@ let exporter = new DynatraceMetricExporter({
 
   // If no OneAgent is available locally, export directly to the Dynatrace server:
   // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
-  // APIToken: '<load API token from secure location such as env or config file>'
+  // apiToken: '<load API token from secure location such as env or config file>'
 });
 
 // exporter = new ConsoleMetricExporter(AggregationTemporality.DELTA);

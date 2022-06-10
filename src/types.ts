@@ -45,6 +45,11 @@ export interface ExporterConfig {
 	 * Can be ommitted if the local OneAgent endpoint is used.
 	 * @default ''
 	 */
+	apiToken?: string;
+
+	/**
+	 * @deprecated please use apiToken
+	 */
 	APIToken?: string;
 
 	/**

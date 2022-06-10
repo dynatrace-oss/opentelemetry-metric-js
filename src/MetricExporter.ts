@@ -69,7 +69,10 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 			"User-Agent": "opentelemetry-metric-js"
 		};
 
-		if (config.APIToken) {
+		if (config.apiToken) {
+			headers.Authorization = `Api-Token ${config.apiToken}`;
+		} else if (config.APIToken) { // eslint-disable-line deprecation/deprecation
+			// eslint-disable-next-line deprecation/deprecation
 			headers.Authorization = `Api-Token ${config.APIToken}`;
 		}
 
