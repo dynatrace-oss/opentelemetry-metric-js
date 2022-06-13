@@ -246,7 +246,10 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		for (const point of metric.dataPoints) {
 			const counter = this._dtMetricFactory.createCounterDelta(metric.descriptor.name, dimensionsFromPoint(point), point.value);
 			if (counter) {
-				out.push(counter.serialize());
+				const serialized = counter.serialize();
+				if (serialized) {
+					out.push(serialized);
+				}
 			}
 		}
 
@@ -273,7 +276,10 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 			);
 
 			if (summary) {
-				out.push(summary.serialize());
+				const serialized = summary.serialize();
+				if (serialized) {
+					out.push(serialized);
+				}
 			}
 		}
 		return out;
@@ -288,7 +294,10 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		for (const point of metric.dataPoints) {
 			const gauge = this._dtMetricFactory.createGauge(metric.descriptor.name, dimensionsFromPoint(point), point.value);
 			if (gauge) {
-				out.push(gauge.serialize());
+				const serialized = gauge.serialize();
+				if (serialized) {
+					out.push(serialized);
+				}
 			}
 		}
 
