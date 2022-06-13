@@ -14,32 +14,23 @@
 	limitations under the License.
 */
 
+import { Dimension, getDefaultOneAgentEndpoint, getDynatraceMetadata, MetricFactory } from "@dynatrace/metric-utils";
 import { diag } from "@opentelemetry/api";
-import { ExportResult, ExportResultCode, hrTimeToMilliseconds } from "@opentelemetry/core";
-import { AggregatorKind, MetricExporter, MetricRecord } from "@opentelemetry/sdk-metrics-base";
+import { ExportResult, ExportResultCode } from "@opentelemetry/core";
+import { AggregationTemporality, DataPoint, DataPointType, InstrumentType, MetricData, PushMetricExporter, ResourceMetrics } from "@opentelemetry/sdk-metrics-base";
 import * as http from "http";
 import * as https from "https";
 import * as url from "url";
+import { estimateHistogram } from "./histogram";
 import { ExporterConfig } from "./types";
-import {
-	getDynatraceMetadata,
-	getDefaultOneAgentEndpoint,
-	getPayloadLinesLimit,
-	MetricFactory,
-	Metric,
-	SummaryValue
-} from "@dynatrace/metric-utils";
-import { AggregationTemporality } from "@opentelemetry/api-metrics";
 
-export class DynatraceMetricExporter implements MetricExporter {
+export class DynatraceMetricExporter implements PushMetricExporter {
 	private readonly _reqOpts: http.RequestOptions;
 	private readonly _httpRequest: typeof http.request | typeof https.request;
 	private readonly _maxRetries: number;
 	private readonly _retryDelay: number;
 	private _isShutdown = false;
 	private _dtMetricFactory: MetricFactory;
-
-	private _failedNormalizations = 0;
 
 	/**
 	 * Constructor
@@ -69,7 +60,7 @@ export class DynatraceMetricExporter implements MetricExporter {
 			staticDimensions: dynatraceMetadata
 		});
 
-		const urlObj = new url.URL(config.url ?? getDefaultOneAgentEndpoint());
+		const urlObj = new URL(config.url ?? getDefaultOneAgentEndpoint());
 		const proto = this._getHttpProto(urlObj);
 		this._httpRequest = proto.request;
 
@@ -78,8 +69,10 @@ export class DynatraceMetricExporter implements MetricExporter {
 			"User-Agent": "opentelemetry-metric-js"
 		};
 
-		if (config.APIToken) {
-			headers.Authorization = `Api-Token ${config.APIToken}`;
+		// eslint-disable-next-line deprecation/deprecation
+		const apiToken = config.apiToken ?? config.APIToken;
+		if (apiToken) {
+			headers.Authorization = `Api-Token ${apiToken}`;
 		}
 
 		this._reqOpts = {
@@ -96,135 +89,73 @@ export class DynatraceMetricExporter implements MetricExporter {
 		};
 	}
 
-	export(
-		metrics: MetricRecord[],
-		resultCallback: (result: ExportResult) => void
-	): void {
-		if (metrics.length === 0) {
-			process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
-			return;
+	selectAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality {
+		switch (instrumentType) {
+			case InstrumentType.OBSERVABLE_GAUGE:
+			case InstrumentType.OBSERVABLE_UP_DOWN_COUNTER:
+			case InstrumentType.UP_DOWN_COUNTER:
+				return AggregationTemporality.CUMULATIVE;
+			default:
+				return AggregationTemporality.DELTA;
 		}
+	}
 
+	// nothing is buffered so there is no need to flush
+	forceFlush(): Promise<void> { return Promise.resolve(); }
+
+	export(metrics: ResourceMetrics, resultCallback: (result: ExportResult) => void): void {
 		if (this._isShutdown) {
 			process.nextTick(resultCallback, { code: ExportResultCode.FAILED });
 			return;
 		}
 
-		// If the batch has more than 1000 metrics, export them in multiple
-		// batches serially. There is no advantage of parallelizing since
-		// the CPU work is single threaded anyway and there is only a single
-		// connection to the server.
-		//
-		// If a single batch fails, the entire batch will be considered a failure.
-		if (metrics.length > getPayloadLinesLimit()) {
-			return this.export(metrics.slice(0, getPayloadLinesLimit()), (result) => {
-				if (result.code !== ExportResultCode.SUCCESS) {
-					resultCallback(result);
-					return;
-				}
-
-				this.export(metrics.slice(getPayloadLinesLimit()), resultCallback);
-			});
-		}
-
-		const dtMetrics = metrics.map((metric) => {
-			const dimensions = Object.entries(metric.attributes).map(([key, value]) => ({ key, value }));
-			switch (metric.aggregator.kind) {
-				case AggregatorKind.SUM: {
-					if (metric.aggregationTemporality !== AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA) {
-						diag.warn(`Aggregation temporality ${AggregationTemporality[metric.aggregationTemporality]} unsupported for metric ${metric.descriptor.name}`);
-						return null;
-					}
-					const data = metric.aggregator.toPoint();
-
-					const valueType = typeof data.value;
-					if (valueType !== "number") {
-						diag.warn(`Metric ${metric.descriptor.name} has invalid data.value type ${valueType}`);
-						return null;
-					}
-
-					if (!isFinite(data.value)) {
-						diag.warn(`Metric ${metric.descriptor.name} has non-finite value`);
-						return null;
-					}
-
-					const normalizedMetric = this._dtMetricFactory
-						.createCounterDelta(
-							metric.descriptor.name,
-							dimensions,
-							data.value,
-							new Date(hrTimeToMilliseconds(data.timestamp))
-						);
-					if (normalizedMetric == null) {
-						this._warnNormalizationFailure(metric.descriptor.name);
-					}
-					return normalizedMetric;
-				}
-				case AggregatorKind.HISTOGRAM: {
-					const data = metric.aggregator.toPoint();
-					const { sum, count } = data.value;
-
-					// TODO remove this hack which pretends all data points had the same value
-					const avg = sum / count;
-
-					const value: SummaryValue = {
-						min: avg,
-						max: avg,
-						sum,
-						count
-					};
-					const normalizedMetric = this._dtMetricFactory
-						.createSummary(
-							metric.descriptor.name,
-							dimensions,
-							value,
-							new Date(hrTimeToMilliseconds(data.timestamp))
-						);
-					if (normalizedMetric == null) {
-						this._warnNormalizationFailure(metric.descriptor.name);
-					}
-					return normalizedMetric;
-				}
-				case AggregatorKind.LAST_VALUE: {
-					const data = metric.aggregator.toPoint();
-					const valueType = typeof data.value;
-					if (valueType !== "number") {
-						diag.warn(`Metric ${metric.descriptor.name} has invalid data.value type ${valueType}`);
-						return null;
-					}
-
-					if (!isFinite(data.value)) {
-						diag.warn(`Metric ${metric.descriptor.name} has non-finite value`);
-						return null;
-					}
-
-					const normalizedMetric = this._dtMetricFactory
-						.createGauge(
-							metric.descriptor.name,
-							dimensions,
-							data.value,
-							new Date(hrTimeToMilliseconds(data.timestamp))
-						);
-					if (normalizedMetric == null) {
-						this._warnNormalizationFailure(metric.descriptor.name);
-					}
-					return normalizedMetric;
-				}
-			}
-		});
-
-		const lines = dtMetrics
-			.filter((m): m is Metric => m != null)
-			.map(m => m.serialize());
-
-		if (lines.length === 0) {
-			diag.warn("DynatraceMetricExporter: all metrics in batch failed to normalize");
+		if (metrics.scopeMetrics.length === 0) {
 			process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
 			return;
 		}
 
-		const payload = lines.join("\n");
-		this._sendRequest(payload, resultCallback, this._maxRetries);
+		let lines: string[] = [];
+		for (const scopeMetric of metrics.scopeMetrics) {
+			for (const metric of scopeMetric.metrics) {
+				switch (metric.descriptor.type) {
+					case InstrumentType.COUNTER:
+					case InstrumentType.OBSERVABLE_COUNTER:
+						lines = lines.concat(this.serializeCounter(metric));
+						break;
+					case InstrumentType.OBSERVABLE_GAUGE:
+					case InstrumentType.UP_DOWN_COUNTER:
+						lines.push(...this.serializeGauge(metric));
+						break;
+					case InstrumentType.HISTOGRAM:
+						lines.push(...this.serializeHistogram(metric));
+						break;
+					default:
+				}
+			}
+		}
+
+		this._sendLines(lines, resultCallback);
+	}
+
+	private _sendLines(lines: string[], resultCallback: (result: ExportResult) => void) {
+		// If the batch has more than 1000 metrics, export them in multiple batches.
+		const batch = lines.slice(0, 1000);
+		const remaining = lines.slice(1000);
+		if (batch.length === 0) {
+			process.nextTick(resultCallback, { code: ExportResultCode.SUCCESS });
+			return;
+		}
+
+		const payload = batch.join("\n");
+
+		this._sendRequest(payload, (result: ExportResult) => {
+			// if a batch fails, do not send the rest
+			if (result.code === ExportResultCode.FAILED || remaining.length === 0) {
+				return resultCallback(result);
+			}
+
+			this._sendLines(remaining, resultCallback);
+		}, this._maxRetries);
 	}
 
 	private _sendRequest(payload: string, resultCallback: (result: ExportResult) => void, remainingRetries: number) {
@@ -306,10 +237,74 @@ export class DynatraceMetricExporter implements MetricExporter {
 		return Promise.resolve();
 	}
 
-	private _warnNormalizationFailure(name: string) {
-		if (this._failedNormalizations === 0) {
-			diag.warn(`DynatraceMetricExporter: Failed to normalize ${name}. Skipping exporting this metric.`);
+	private serializeCounter(metric: MetricData): string[] {
+		const out: string[] = [];
+		if (metric.dataPointType !== DataPointType.SINGULAR) {
+			return out;
 		}
-		this._failedNormalizations = ++this._failedNormalizations % 1000;
+
+		for (const point of metric.dataPoints) {
+			const counter = this._dtMetricFactory.createCounterDelta(metric.descriptor.name, dimensionsFromPoint(point), point.value);
+			if (counter) {
+				const serialized = counter.serialize();
+				if (serialized) {
+					out.push(serialized);
+				}
+			}
+		}
+
+		return out;
 	}
+
+	private serializeHistogram(metric: MetricData): string[] {
+		const out: string[] = [];
+		if (metric.dataPointType !== DataPointType.HISTOGRAM) {
+			return out;
+		}
+
+		for (const point of metric.dataPoints) {
+			const summaryValue = estimateHistogram(point);
+
+			if (summaryValue == null) {
+				continue;
+			}
+
+			const summary = this._dtMetricFactory.createSummary(
+				metric.descriptor.name,
+				dimensionsFromPoint(point),
+				summaryValue
+			);
+
+			if (summary) {
+				const serialized = summary.serialize();
+				if (serialized) {
+					out.push(serialized);
+				}
+			}
+		}
+		return out;
+	}
+
+	private serializeGauge(metric: MetricData): string[] {
+		const out: string[] = [];
+		if (metric.dataPointType !== DataPointType.SINGULAR) {
+			return out;
+		}
+
+		for (const point of metric.dataPoints) {
+			const gauge = this._dtMetricFactory.createGauge(metric.descriptor.name, dimensionsFromPoint(point), point.value);
+			if (gauge) {
+				const serialized = gauge.serialize();
+				if (serialized) {
+					out.push(serialized);
+				}
+			}
+		}
+
+		return out;
+	}
+}
+
+function dimensionsFromPoint(point: DataPoint<unknown>): Dimension[] {
+	return Object.entries(point.attributes).map(([key, value]) => ({ key, value }));
 }

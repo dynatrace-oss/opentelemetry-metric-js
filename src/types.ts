@@ -42,8 +42,13 @@ export interface ExporterConfig {
 
 	/**
 	 * Dynatrace API token.
-	 * Can be ommitted if the local OneAgent endpoint is used.
+	 * Can be omitted if the local OneAgent endpoint is used.
 	 * @default ''
+	 */
+	apiToken?: string;
+
+	/**
+	 * @deprecated please use apiToken
 	 */
 	APIToken?: string;
 
