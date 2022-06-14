@@ -124,7 +124,9 @@ variable.
 
 Creating an API token for your Dynatrace environment is described in the
 [Dynatrace API documentation](https://www.dynatrace.com/support/help/dynatrace-api/basics/dynatrace-api-authentication/).
-The permission required for sending metrics is `Ingest metrics` (`metrics.ingest`) and it is recommended to limit scope to only this permission.
+The permission required for sending metrics is `Ingest metrics`
+(`metrics.ingest`) and it is recommended to limit scope to only
+this permission.
 
 #### Metric Key Prefix
 
