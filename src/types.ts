@@ -15,6 +15,7 @@
 */
 
 import { Dimension } from "@dynatrace/metric-utils";
+
 export { Dimension } from "@dynatrace/metric-utils";
 
 /**
@@ -22,10 +23,10 @@ export { Dimension } from "@dynatrace/metric-utils";
  */
 export interface ExporterConfig {
 	/**
-   * App prefix for metrics, if needed
-   *
-   * @default ''
-   * */
+	 * App prefix for metrics, if needed
+	 *
+	 * @default ''
+	 * */
 	prefix?: string;
 
 	/**
@@ -62,10 +63,10 @@ export interface ExporterConfig {
 	/**
 	 * The number of times the exporter should retry before returning failure (default: 3)
 	 */
-	maxRetries? : number;
+	maxRetries?: number;
 
 	/**
 	 * The time in milliseconds to wait before retrying an export that failed due to a connection error (default: 1000)
 	 */
-	retryDelay? : number;
+	retryDelay?: number;
 }

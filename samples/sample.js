@@ -8,7 +8,7 @@ const { DynatraceMetricExporter } = require('..');
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
 
 let exporter = new DynatraceMetricExporter({
-  prefix: 'sample', // optional
+  prefix: 'sample' // optional
 
   // If no OneAgent is available locally, export directly to the Dynatrace server:
   // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
@@ -25,11 +25,11 @@ provider.addMetricReader(reader);
 const meter = provider.getMeter('opentelemetry-metrics-sample-dynatrace');
 
 const requestCounter = meter.createCounter('requests', {
-  description: 'Example of a Counter',
+  description: 'Example of a Counter'
 });
 
 const upDownCounter = meter.createUpDownCounter('test_up_down_counter', {
-  description: 'Example of a UpDownCounter',
+  description: 'Example of a UpDownCounter'
 });
 const attributes = { pid: process.pid, environment: 'staging' };
 
