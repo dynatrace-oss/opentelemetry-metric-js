@@ -2,7 +2,7 @@
 
 const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
 const { Resource } = require('@opentelemetry/resources');
-const { MeterProvider, PeriodicExportingMetricReader, ConsoleMetricExporter, AggregationTemporality } = require('@opentelemetry/sdk-metrics-base');
+const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics-base');
 const { DynatraceMetricExporter } = require('..');
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
