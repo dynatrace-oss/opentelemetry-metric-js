@@ -124,10 +124,10 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 						break;
 					case InstrumentType.OBSERVABLE_GAUGE:
 					case InstrumentType.UP_DOWN_COUNTER:
-						lines.push(...this.serializeGauge(metric));
+						lines = lines.concat(this.serializeGauge(metric));
 						break;
 					case InstrumentType.HISTOGRAM:
-						lines.push(...this.serializeHistogram(metric));
+						lines = lines.concat(this.serializeHistogram(metric));
 						break;
 					default:
 				}
