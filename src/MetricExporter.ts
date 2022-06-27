@@ -70,7 +70,7 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		};
 
 		// eslint-disable-next-line deprecation/deprecation
-		const apiToken = config.apiToken ?? config.APIToken;
+		const apiToken = config.apiToken ?? config.APIToken; // NOSONAR
 		if (apiToken) {
 			headers.Authorization = `Api-Token ${apiToken}`;
 		}
