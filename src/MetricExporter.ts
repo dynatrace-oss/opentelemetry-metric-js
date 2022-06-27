@@ -61,7 +61,7 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		});
 
 		const urlObj = new URL(config.url ?? getDefaultOneAgentEndpoint());
-		const proto = this._getHttpProto(urlObj);
+		const proto = DynatraceMetricExporter._getHttpProto(urlObj);
 		this._httpRequest = proto.request;
 
 		const headers: Record<string, string> = {
@@ -214,7 +214,7 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		request.end(payload);
 	}
 
-	private _getHttpProto(urlObj: url.URL) {
+	private static _getHttpProto(urlObj: url.URL) {
 		let proto: typeof https | typeof http;
 		switch (urlObj.protocol) {
 			case "http:":
