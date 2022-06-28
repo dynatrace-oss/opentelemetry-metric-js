@@ -645,7 +645,6 @@ describe("MetricExporter.export", () => {
 		exporter.export(getHistogramResourceMetric("metric", AggregationTemporality.DELTA),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
-				// there should still be an unused active mock
 				expect(scope.activeMocks()).toHaveLength(0);
 				expect(scope.pendingMocks()).toHaveLength(0);
 				done();
