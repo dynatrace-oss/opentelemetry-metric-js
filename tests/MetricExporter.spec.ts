@@ -623,6 +623,7 @@ describe("MetricExporter.export", () => {
 
 		const scope: nock.Scope = nock(target_host)
 			.post(target_path, "metric,key=value gauge,min=1,max=10,sum=22.4,count=7")
+			.once()
 			.reply(200);
 
 		exporter.export(getHistogramResourceMetric("metric", AggregationTemporality.DELTA),
@@ -633,5 +634,166 @@ describe("MetricExporter.export", () => {
 				done();
 			});
 	});
-});
 
+	test("should not export histogram with non-histogram point data", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		exporter.export(
+			// generates a histogram with number data points (not histogram data points)
+			getResourceMetric("metric", 1.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.HISTOGRAM),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// there should still be an unused active mock
+				expect(scope.activeMocks()).toHaveLength(1);
+				expect(scope.pendingMocks()).toHaveLength(1);
+				done();
+			});
+	});
+
+	test("should not export non-histogram types with histogram point data", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		function createNonHistogramMetricsWithHistogramDataPoints(instrumentType: InstrumentType): ResourceMetrics {
+			return {
+				resource: new Resource({}),
+				scopeMetrics: [{
+					scope: {
+						name: "myscope"
+					},
+					metrics: [
+						{
+							aggregationTemporality: AggregationTemporality.DELTA,
+							dataPointType: DataPointType.HISTOGRAM,
+							descriptor: {
+								description: "a data point",
+								name: "metric",
+								type: instrumentType,
+								unit: "",
+								valueType: ValueType.DOUBLE
+							},
+							dataPoints: [
+								{
+									attributes: {
+										key: "value"
+									},
+									endTime: [0, 0],
+									startTime: [0, 0],
+									value: {
+										sum: 22.4,
+										buckets: {
+											boundaries: [1, 3, 5, 10],
+											counts: [3, 1, 2, 0, 1]
+										},
+										count: 7
+									}
+								}
+							]
+						}
+					]
+				}]
+			};
+		}
+
+		exporter.export(
+			// generates number metric with histogram data points
+			createNonHistogramMetricsWithHistogramDataPoints(InstrumentType.COUNTER),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+			});
+
+		exporter.export(
+			createNonHistogramMetricsWithHistogramDataPoints(InstrumentType.OBSERVABLE_GAUGE),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+			});
+
+		exporter.export(
+			createNonHistogramMetricsWithHistogramDataPoints(InstrumentType.UP_DOWN_COUNTER),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// there should still be an unused active mock
+				expect(scope.activeMocks()).toHaveLength(1);
+				expect(scope.pendingMocks()).toHaveLength(1);
+				done();
+			});
+	});
+
+	test("export with success if there are no metrics", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		const emptyMetrics: ResourceMetrics = {
+			resource: new Resource({}),
+			scopeMetrics: []
+		};
+
+		exporter.export(emptyMetrics,
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// there should still be an unused active mock
+				expect(scope.activeMocks()).toHaveLength(1);
+				expect(scope.pendingMocks()).toHaveLength(1);
+				done();
+			});
+	});
+
+	test("export with failure if shutdown was called", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		const emptyMetrics: ResourceMetrics = {
+			resource: new Resource({}),
+			scopeMetrics: []
+		};
+
+		exporter.shutdown().then(
+			() => {
+				exporter.export(emptyMetrics,
+					(result: ExportResult) => {
+						expect(result.code).toEqual(ExportResultCode.FAILED);
+						// there should still be an unused active mock
+						expect(scope.activeMocks()).toHaveLength(1);
+						expect(scope.pendingMocks()).toHaveLength(1);
+						done();
+					});
+			})
+			.catch(
+				() => fail("shutdown failed to resolve")
+			);
+	});
+
+});
