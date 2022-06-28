@@ -128,12 +128,7 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 						lines = lines.concat(this.serializeGauge(metric));
 						break;
 					case InstrumentType.UP_DOWN_COUNTER:
-						if (metric.aggregationTemporality === AggregationTemporality.CUMULATIVE) {
-							// cumulative UpDownCounters can be exported as gauge
-							lines = lines.concat(this.serializeGauge(metric));
-						} else {
-							diag.warn(`dropping delta non-monotonic sum (${metric.descriptor.name})`);
-						}
+						lines = lines.concat(this.serializeUpDownCounter(metric));
 						break;
 					case InstrumentType.HISTOGRAM:
 						lines = lines.concat(this.serializeHistogram(metric));
@@ -145,6 +140,7 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 
 		this._sendLines(lines, resultCallback);
 	}
+
 
 	private _sendLines(lines: string[], resultCallback: (result: ExportResult) => void) {
 		// If the batch has more than 1000 metrics, export them in multiple batches.
@@ -268,6 +264,14 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		}
 
 		return out;
+	}
+	private serializeUpDownCounter(metric: MetricData) : string[] {
+		if (metric.aggregationTemporality !== AggregationTemporality.CUMULATIVE) {
+			diag.warn(`dropping non-cumulative non-monotonic sum (${metric.descriptor.name})`);
+			return [];
+		}
+
+		return this.serializeGauge(metric);
 	}
 
 	private serializeHistogram(metric: MetricData): string[] {
