@@ -516,7 +516,8 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
-	test("should export valid gauge metric when using delta temporality", (done) => {
+	test("should export valid gauge metric independent of temporality", (done) => {
+		// Gauge metrics should be serialized independent of the Temporality
 		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -526,36 +527,18 @@ describe("MetricExporter.export", () => {
 
 		const scope: nock.Scope = nock(target_host)
 			.post(target_path, "test,key=value gauge,3.2")
-			.once()
-			.reply(200);
-
-		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.OBSERVABLE_GAUGE),
-			(result: ExportResult) => {
-				expect(result.code).toEqual(ExportResultCode.SUCCESS);
-				// the request was sent once, no pending mocks are available
-				expect(scope.activeMocks()).toHaveLength(0);
-				expect(scope.pendingMocks()).toHaveLength(0);
-				done();
-			});
-	});
-
-	test("should export valid gauge metric when using cumulative temporality", (done) => {
-		const target_host = "https://example.com:8080";
-		const target_path = "/metrics";
-		const target_url = target_host + target_path;
-		const exporter = new DynatraceMetricExporter({
-			url: target_url
-		});
-
-		const scope: nock.Scope = nock(target_host)
-			.post(target_path, "test,key=value gauge,3.2")
-			.once()
+			.twice()
 			.reply(200);
 
 		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE, InstrumentType.OBSERVABLE_GAUGE),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
-				// the request was sent once, no pending mocks are available
+			});
+
+		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.OBSERVABLE_GAUGE),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// the request was sent twice, no pending mocks are available
 				expect(scope.activeMocks()).toHaveLength(0);
 				expect(scope.pendingMocks()).toHaveLength(0);
 				done();
