@@ -736,7 +736,7 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
-	test("export with success if there are no metrics", (done) => {
+	test("should export with success if there are no metrics", (done) => {
 		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -763,7 +763,7 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
-	test("export with failure if shutdown was called", (done) => {
+	test("should export with failure if shutdown was called", (done) => {
 		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
