@@ -101,7 +101,9 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 	}
 
 	// nothing is buffered so there is no need to flush
-	forceFlush(): Promise<void> { return Promise.resolve(); }
+	forceFlush(): Promise<void> {
+		return Promise.resolve();
+	}
 
 	export(metrics: ResourceMetrics, resultCallback: (result: ExportResult) => void): void {
 		if (this._isShutdown) {
@@ -123,8 +125,15 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 						lines = lines.concat(this.serializeCounter(metric));
 						break;
 					case InstrumentType.OBSERVABLE_GAUGE:
-					case InstrumentType.UP_DOWN_COUNTER:
 						lines = lines.concat(this.serializeGauge(metric));
+						break;
+					case InstrumentType.UP_DOWN_COUNTER:
+						if (metric.aggregationTemporality === AggregationTemporality.CUMULATIVE) {
+							// cumulative UpDownCounters can be exported as gauge
+							lines = lines.concat(this.serializeGauge(metric));
+						} else {
+							diag.warn(`dropping delta non-monotonic sum (${metric.descriptor.name})`);
+						}
 						break;
 					case InstrumentType.HISTOGRAM:
 						lines = lines.concat(this.serializeHistogram(metric));
@@ -243,6 +252,11 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 			return out;
 		}
 
+		if (metric.aggregationTemporality === AggregationTemporality.CUMULATIVE) {
+			diag.warn(`dropping cumulative sum (${metric.descriptor.name})`);
+			return out;
+		}
+
 		for (const point of metric.dataPoints) {
 			const counter = this._dtMetricFactory.createCounterDelta(metric.descriptor.name, dimensionsFromPoint(point), point.value);
 			if (counter) {
@@ -259,6 +273,11 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 	private serializeHistogram(metric: MetricData): string[] {
 		const out: string[] = [];
 		if (metric.dataPointType !== DataPointType.HISTOGRAM) {
+			return out;
+		}
+
+		if (metric.aggregationTemporality === AggregationTemporality.CUMULATIVE) {
+			diag.warn(`dropping cumulative histogram (${metric.descriptor.name})`);
 			return out;
 		}
 

@@ -60,7 +60,13 @@ describe("MetricExporter", () => {
 describe("MetricExporter.export", () => {
 	beforeEach(() => nock.cleanAll());
 
-	function getResourceMetric(name: string, value: number, attributes: MetricAttributes): ResourceMetrics {
+	function getResourceMetric(
+		name: string,
+		value: number,
+		attributes: MetricAttributes,
+		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA,
+		instrumentType: InstrumentType = InstrumentType.COUNTER
+	): ResourceMetrics {
 		return {
 			resource: new Resource({}),
 			scopeMetrics: [{
@@ -69,12 +75,12 @@ describe("MetricExporter.export", () => {
 				},
 				metrics: [
 					{
-						aggregationTemporality: AggregationTemporality.DELTA,
+						aggregationTemporality: aggregationTemporality,
 						dataPointType: DataPointType.SINGULAR,
 						descriptor: {
 							description: "a data point",
 							name,
-							type: InstrumentType.COUNTER,
+							type: instrumentType,
 							unit: "",
 							valueType: ValueType.DOUBLE
 						},
@@ -89,6 +95,49 @@ describe("MetricExporter.export", () => {
 			}]
 		};
 	}
+
+	function getHistogramResourceMetric(name: string, aggregationTemporality: AggregationTemporality): ResourceMetrics {
+		return {
+			resource: new Resource({}),
+			scopeMetrics: [{
+				scope: {
+					name: "myscope"
+				},
+				metrics: [
+					{
+						aggregationTemporality: aggregationTemporality,
+						dataPointType: DataPointType.HISTOGRAM,
+						descriptor: {
+							description: "a histogram",
+							name: name,
+							type: InstrumentType.HISTOGRAM,
+							unit: "",
+							valueType: ValueType.DOUBLE
+						},
+						dataPoints: [
+							{
+								attributes: {
+									key: "value"
+								},
+								endTime: [0, 0],
+								startTime: [0, 0],
+								value: {
+									sum: 22.4,
+									buckets: {
+										boundaries: [1, 3, 5, 10],
+										counts: [3, 1, 2, 0, 1]
+									},
+									count: 7
+								}
+							}
+						]
+					}
+				]
+			}]
+		};
+	}
+
+
 
 
 	test("should export metrics and return a success message", (done) => {
@@ -416,6 +465,187 @@ describe("MetricExporter.export", () => {
 
 				// both the active and the pending mocks have been "used up".
 				// This ensures that two requests were sent.
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
+	});
+
+	test("should export delta counter metric", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, "test,key=value count,delta=3.2")
+			.once()
+			.reply(200);
+
+		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.COUNTER),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// the request was sent once, no pending mocks are available
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
+	});
+
+	test("should not export cumulative counter metric", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE, InstrumentType.COUNTER),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// there should still be an unused active mock
+				expect(scope.activeMocks()).toHaveLength(1);
+				expect(scope.pendingMocks()).toHaveLength(1);
+				done();
+			});
+	});
+
+	test("should export valid gauge metric when using delta temporality", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, "test,key=value gauge,3.2")
+			.once()
+			.reply(200);
+
+		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.OBSERVABLE_GAUGE),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// the request was sent once, no pending mocks are available
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
+	});
+
+	test("should export valid gauge metric when using cumulative temporality", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, "test,key=value gauge,3.2")
+			.once()
+			.reply(200);
+
+		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE, InstrumentType.OBSERVABLE_GAUGE),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// the request was sent once, no pending mocks are available
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
+	});
+
+	test("should export cumulative UpDownCounter as gauge", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, "test,key=value gauge,3.2")
+			.once()
+			.reply(200);
+
+		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE, InstrumentType.UP_DOWN_COUNTER),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// the request was sent once, no pending mocks are available
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
+	});
+
+	test("should not export delta UpDownCounter metric", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.UP_DOWN_COUNTER),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// there should still be an unused active mock
+				expect(scope.activeMocks()).toHaveLength(1);
+				expect(scope.pendingMocks()).toHaveLength(1);
+				done();
+			});
+	});
+
+
+	test("should not export cumulative histogram", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path)
+			.reply(200);
+
+		exporter.export(getHistogramResourceMetric("metric", AggregationTemporality.CUMULATIVE),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// there should still be an unused active mock
+				expect(scope.activeMocks()).toHaveLength(1);
+				expect(scope.pendingMocks()).toHaveLength(1);
+				done();
+			});
+	});
+
+	test("should export summary for delta histogram", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, "metric,key=value gauge,min=1,max=10,sum=22.4,count=7")
+			.reply(200);
+
+		exporter.export(getHistogramResourceMetric("metric", AggregationTemporality.DELTA),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				// there should still be an unused active mock
 				expect(scope.activeMocks()).toHaveLength(0);
 				expect(scope.pendingMocks()).toHaveLength(0);
 				done();
