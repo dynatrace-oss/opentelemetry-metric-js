@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-import { DynatraceMetricExporter } from "../src";
+import { DynatraceMetricExporter } from "../src/DynatraceMetricExporter";
 import * as nock from "nock";
 import { MetricAttributes, ValueType } from "@opentelemetry/api-metrics";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";

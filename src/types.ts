@@ -70,3 +70,15 @@ export interface ExporterConfig {
 	 */
 	retryDelay?: number;
 }
+
+export interface ReaderConfig {
+	/**
+	 * The interval in which metrics are exported using the PeriodicExportingMetricReader (default: 60000)
+	 */
+	exportIntervalMillis?: number;
+
+	/**
+	 * The maximum timeout to wait for an export to finish (default: 30000)
+	 */
+	exportTimeoutMillis?: number;
+}

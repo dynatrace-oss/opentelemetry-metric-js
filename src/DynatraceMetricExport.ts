@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 Dynatrace LLC
+	Copyright 2022 Dynatrace LLC
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,5 +14,16 @@
 	limitations under the License.
 */
 
-export * from "./DynatraceMetricExport";
-export * from "./types";
+import { ExporterConfig, ReaderConfig } from "./types";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics-base";
+import { DynatraceMetricExporter } from "./DynatraceMetricExporter";
+
+export function configureDynatraceMetricExport(exporterConfig: ExporterConfig, readerConfig: ReaderConfig): PeriodicExportingMetricReader {
+	return new PeriodicExportingMetricReader(
+		{
+			exporter: new DynatraceMetricExporter(exporterConfig),
+			...readerConfig
+		}
+	);
+}
+
