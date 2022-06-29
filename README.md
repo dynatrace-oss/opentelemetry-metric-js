@@ -20,8 +20,8 @@ Using the Metrics API is explained in the
 
 The Dynatrace OpenTelemetry exporter requires the following prerequisites:
 
-- [Node.js 12+](https://nodejs.org/en/)
-- NPM (6+ recommended, included with Node.js)
+- [Node.js 14+](https://nodejs.org/en/)
+- NPM (8+ recommended, included with Node.js)
 
 ```sh
 # Optional - update NPM
