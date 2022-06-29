@@ -141,7 +141,6 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		this._sendLines(lines, resultCallback);
 	}
 
-
 	private _sendLines(lines: string[], resultCallback: (result: ExportResult) => void) {
 		// If the batch has more than 1000 metrics, export them in multiple batches.
 		const batch = lines.slice(0, 1000);
@@ -265,7 +264,8 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 
 		return out;
 	}
-	private serializeUpDownCounter(metric: MetricData) : string[] {
+
+	private serializeUpDownCounter(metric: MetricData): string[] {
 		if (metric.aggregationTemporality !== AggregationTemporality.CUMULATIVE) {
 			diag.warn(`dropping non-cumulative non-monotonic sum (${metric.descriptor.name})`);
 			return [];
