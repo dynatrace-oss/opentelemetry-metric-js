@@ -18,6 +18,11 @@ import { ExporterConfig, ReaderConfig } from "./types";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics-base";
 import { DynatraceMetricExporter } from "./DynatraceMetricExporter";
 
+/**
+ * Configure a {@link PeriodicExportingMetricReader} to export to Dynatrace.
+ * @param exporterConfig configuration properties for the export to Dynatrace.
+ * @param readerConfig configuration for the {@link PeriodicExportingMetricReader metric reader}.
+ */
 export function configureDynatraceMetricExport(exporterConfig: ExporterConfig, readerConfig: ReaderConfig): PeriodicExportingMetricReader {
 	return new PeriodicExportingMetricReader(
 		{
@@ -26,4 +31,3 @@ export function configureDynatraceMetricExport(exporterConfig: ExporterConfig, r
 		}
 	);
 }
-
