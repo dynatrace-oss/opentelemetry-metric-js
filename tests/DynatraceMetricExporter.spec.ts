@@ -22,7 +22,7 @@ import { Resource } from "@opentelemetry/resources";
 import { AggregationTemporality, DataPointType, InstrumentType, ResourceMetrics } from "@opentelemetry/sdk-metrics-base";
 
 
-describe("MetricExporter", () => {
+describe("DynatraceMetricExporter", () => {
 	test("should default to oneagent endpoint", () => {
 		const exporter = new DynatraceMetricExporter();
 		expect(exporter["_reqOpts"].hostname).toEqual("localhost");
@@ -763,7 +763,7 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
-	test("should export with failure if shutdown was called", (done) => {
+	test("should fail to export if shutdown was called before", (done) => {
 		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
