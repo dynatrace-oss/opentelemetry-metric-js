@@ -23,7 +23,7 @@ import { DynatraceMetricExporter } from "./DynatraceMetricExporter";
  * @param exporterConfig configuration properties for the export to Dynatrace.
  * @param readerConfig configuration for the {@link PeriodicExportingMetricReader metric reader}.
  */
-export function configureDynatraceMetricExport(exporterConfig: ExporterConfig, readerConfig: ReaderConfig): PeriodicExportingMetricReader {
+export function configureDynatraceMetricExport(exporterConfig: ExporterConfig = {}, readerConfig: ReaderConfig = {}): PeriodicExportingMetricReader {
 	return new PeriodicExportingMetricReader(
 		{
 			exporter: new DynatraceMetricExporter(exporterConfig),

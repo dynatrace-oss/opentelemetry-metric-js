@@ -8,16 +8,16 @@ const { configureDynatraceMetricExport } = require("..");
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
 
 const reader = configureDynatraceMetricExport(
+  // ExporterConfig
   {
-    // ExporterConfig
     prefix: 'sample', // optional
 
     // If no OneAgent is available locally, export directly to the Dynatrace server:
     // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
     // apiToken: '<load API token from secure location such as env or config file>'
   },
+  // ReaderConfig
   {
-    // ReaderConfig
     exportIntervalMillis: 5000
   }
 );
