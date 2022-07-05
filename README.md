@@ -13,8 +13,8 @@ directly to [Dynatrace](https://www.dynatrace.com).
 
 It was built against OpenTelemetry SDK version `0.29.0`.
 
-More information on exporting OpenTelemetry metrics to Dynatrace can be found in the
-[Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/opentelemetry-metrics).
+More information on exporting OpenTelemetry metrics to Dynatrace can be found in
+the [Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/opentelemetry-metrics).
 
 ## Getting started
 
@@ -61,7 +61,8 @@ const reader = configureDynatraceMetricExport(
       { key: "default-dim", value: "default-dim-value" },
     ],
 
-    // If no OneAgent is available locally, set up url and token and export directly to the Dynatrace server:
+    // If no OneAgent is available locally, set up url and token and export
+    // directly to the Dynatrace server:
     // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
     // apiToken: '<load API token from secure location such as env or config file>'
   },
@@ -86,7 +87,8 @@ const requestCounter = meter.createCounter('requests', {
 requestCounter.add(2)
 ```
 
-Metrics are exported periodically, depending on the value of exportIntervalMillis set above.
+Metrics are exported periodically, depending on the value of
+exportIntervalMillis set above.
 
 A full setup is provided in our [example project](samples/).
 
@@ -110,7 +112,8 @@ would be `https://myenv123.live.dynatrace.com/api/v2/metrics/ingest`.
 If a OneAgent is installed on the host, it can provide a local endpoint for
 providing metrics directly without the need for an API token.
 Depending on your environment, this feature might have to be enabled as
-described in the [OneAgent metric API documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/local-api/)
+described in the
+[OneAgent metric API documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/local-api/)
 first.
 Using the local API endpoint, the host ID and host name context are
 automatically added to each metric as dimensions.
@@ -159,12 +162,14 @@ If running on a host with a running OneAgent, the exporter will export metadata
 collected by the OneAgent to the Dynatrace endpoint.
 This typically consists of the Dynatrace host ID and process group ID.
 More information on the underlying feature used by the exporter can be found in
-the [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
+the
+[Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
 By default, this option is turned on.
 
 ## Histogram
 
-OpenTelemetry Histograms are exported to Dynatrace as statistical summaries consisting
-of a minimum and maximum value, the total sum of all values, and the count of the values
-summarized. If the min and max values are not directly available on the metric data point,
-estimations based on the boundaries of the first and last buckets containing values are used.
+OpenTelemetry Histograms are exported to Dynatrace as statistical summaries
+consisting of a minimum and maximum value, the total sum of all values, and the
+count of the values summarized. If the min and max values are not directly
+available on the metric data point, estimations based on the boundaries of the
+first and last buckets containing values are used.
