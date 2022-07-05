@@ -163,6 +163,7 @@ the [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-
 By default, this option is turned on.
 
 ## Histogram
+
 OpenTelemetry Histograms are exported to Dynatrace as statistical summaries consisting
 of a minimum and maximum value, the total sum of all values, and the count of the values
 summarized. If the min and max values are not directly available on the metric data point,
