@@ -107,15 +107,15 @@ the `ExporterConfig` in `configureDynatraceMetricExport`:
 
 <!-- disable long lines and inline HTML elements checking for the table -->
 <!-- markdownlint-disable MD013 MD033 -->
-| Name                          | Type               | Description                                                                                              |
-|-------------------------------|--------------------|----------------------------------------------------------------------------------------------------------|
-| `prefix`                      | `string`           | See [Metric key prefix](#metric-key-prefix).                                                             |
-| `defaultDimensions`           | `Array<Dimension>` | Dimensions to be added to all metrics.<br/>A dimension is an object with a `key` and a `value` property. |
-| `url`                         | `string`           | See [Endpoint](#dynatrace-api-endpoint).                                                                 |
-| `apiToken`                    | `string`           | See [API token](#dynatrace-api-token).                                                                   |
-| `dynatraceMetadataEnrichment` | `boolean`          | See [Dynatrace Metadata enrichment](#dynatrace-metadata-enrichment).                                     |
-| `maxRetries`                  | `number`           | The number of times the exporter should retry before returning failure.                                  |
-| `retryDelay`                  | `number`           | The time in milliseconds to wait before retrying an export that failed due to a connection error.        |
+| Name                          | Type               | Description                                                          |
+|-------------------------------|--------------------|----------------------------------------------------------------------|
+| `prefix`                      | `string`           | See [Metric key prefix](#metric-key-prefix).                         |
+| `defaultDimensions`           | `Array<Dimension>` | See [Default attributes](#default-attributesdimensions)              |
+| `url`                         | `string`           | See [Endpoint](#dynatrace-api-endpoint).                             |
+| `apiToken`                    | `string`           | See [API token](#dynatrace-api-token).                               |
+| `dynatraceMetadataEnrichment` | `boolean`          | See [Dynatrace Metadata enrichment](#dynatrace-metadata-enrichment). |
+| `maxRetries`                  | `number`           | See [Retries on Connection Failure](#retries-on-connection-failure). |
+| `retryDelay`                  | `number`           | See [Retries on Connection Failure](#retries-on-connection-failure). |
 <!-- markdownlint-enable MD013 MD033 -->
 
 In addition, there are some settings that will be passed to the `MetricReader`.
