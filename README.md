@@ -19,10 +19,10 @@ the [Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/o
 ## Getting started
 
 The general setup of OpenTelemetry JS is explained in the official
-[Getting Started Guide](https://github.com/open-telemetry/opentelemetry-js/blob/master/getting-started/README.md).
+[Getting Started Guide](https://opentelemetry.io/docs/instrumentation/js/getting-started/nodejs/).
 
 Using the Metrics API is explained in the
-[Monitor Your NodeJS Application section](https://github.com/open-telemetry/opentelemetry-js/blob/master/getting-started/README.md#monitor-your-nodejs-application).
+[Monitor Your NodeJS Application section](https://opentelemetry.io/docs/instrumentation/js/getting-started/nodejs/#metrics).
 
 ### Install Dependencies
 
@@ -47,7 +47,7 @@ npm install --save @dynatrace/opentelemetry-exporter-metrics
 The Dynatrace exporter is added and set-up like this:
 
 ```js
-const { configureDynatraceMetricExport } = require("@dynatrace/opentelemetry-exporter-metrics");
+const { configureDynatraceMetricExport } = require('@dynatrace/opentelemetry-exporter-metrics');
 const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
 const { Resource } = require('@opentelemetry/resources');
 const { MeterProvider } = require('@opentelemetry/sdk-metrics-base');
@@ -59,9 +59,9 @@ diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 const reader = configureDynatraceMetricExport(
   // exporter configuration
   {
-    prefix: "my_prefix", // optional
+    prefix: 'my_prefix', // optional
     defaultDimensions: [   // optional
-      { key: "default-dim", value: "default-dim-value" },
+      { key: 'default-dim', value: 'default-dim-value' },
     ],
 
     // If no OneAgent is available locally, set up url and token and export
@@ -76,8 +76,8 @@ const reader = configureDynatraceMetricExport(
 );
 
 const provider = new MeterProvider({
-    resource: new Resource({'service.name': 'your-service-name'})
-  });
+  resource: new Resource({'service.name': 'your-service-name'})
+});
 
 provider.addMetricReader(reader);
 const meter = provider.getMeter('opentelemetry-metrics-sample-dynatrace');
