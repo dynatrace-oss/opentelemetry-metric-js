@@ -39,7 +39,7 @@ npm install --global npm
 npm install @dynatrace/opentelemetry-exporter-metrics
 ```
 
-If you are using a node version < 7, please install the `@opentelemetry/api`
+If you are using a `npm` version < 7, please install the `@opentelemetry/api`
 peer dependency manually.
 
 ```sh
