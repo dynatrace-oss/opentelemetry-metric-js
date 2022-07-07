@@ -104,7 +104,7 @@ A full setup is provided in our [example project](samples/sample.js).
 The exporter allows for configuring the following settings by setting them in
 the `ExporterConfig` in `configureDynatraceMetricExport`:
 
-
+<!-- markdownlint-disable MD013 MD033 -->
 | Name                          | Type               | Description                                                                                              |
 |-------------------------------|--------------------|----------------------------------------------------------------------------------------------------------|
 | `prefix`                      | `string`           | See [Metric key prefix](#metric-key-prefix).                                                             |
@@ -114,15 +114,18 @@ the `ExporterConfig` in `configureDynatraceMetricExport`:
 | `dynatraceMetadataEnrichment` | `boolean`          | See [Dynatrace Metadata enrichment](#dynatrace-metadata-enrichment).                                     |
 | `maxRetries`                  | `number`           | The number of times the exporter should retry before returning failure.                                  |
 | `retryDelay`                  | `number`           | The time in milliseconds to wait before retrying an export that failed due to a connection error.        |
+<!-- markdownlint-enable MD013 MD033 -->
 
+I will put this very long line here for some testing. I will put this very long line here for some testing. I will put this very long line here for some testing. I will put this very long line here for some testing.
 In addition, there are some settings that will be passed to the `MetricReader`.
 These can be set in the `ReaderConfig`
 
+<!-- markdownlint-disable MD013 -->
 | Name                   | Type     | Description                                          | Default            |
 |------------------------|----------|------------------------------------------------------|--------------------|
-| `exportIntervalMillis` | `number` | The interval in which metrics are exported.          | 60000 (60 seconds) |
+| `exportIntervalMillis` | `number` | The interval<br/> in which metrics are exported.          | 60000 (60 seconds) |
 | `exportTimeoutMillis`  | `number` | The maximum timeout to wait for an export to finish. | 30000 (30 seconds) |
-
+<!-- markdownlint-enable MD013 -->
 
 #### Dynatrace API Endpoint
 
