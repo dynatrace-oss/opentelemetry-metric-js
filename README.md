@@ -39,7 +39,8 @@ npm install --global npm
 npm install @dynatrace/opentelemetry-exporter-metrics
 ```
 
-If you are using a node version < 7, please install the `@opentelemetry/api` peer dependency manually.
+If you are using a node version < 7, please install the `@opentelemetry/api`
+peer dependency manually.
 
 ```sh
 # Install peer dependency @opentelemetry/api
@@ -104,6 +105,7 @@ A full setup is provided in our [example project](samples/sample.js).
 The exporter allows for configuring the following settings by setting them in
 the `ExporterConfig` in `configureDynatraceMetricExport`:
 
+<!-- disable long lines and inline HTML elements checking for the table -->
 <!-- markdownlint-disable MD013 MD033 -->
 | Name                          | Type               | Description                                                                                              |
 |-------------------------------|--------------------|----------------------------------------------------------------------------------------------------------|
@@ -116,14 +118,13 @@ the `ExporterConfig` in `configureDynatraceMetricExport`:
 | `retryDelay`                  | `number`           | The time in milliseconds to wait before retrying an export that failed due to a connection error.        |
 <!-- markdownlint-enable MD013 MD033 -->
 
-I will put this very long line here for some testing. I will put this very long line here for some testing. I will put this very long line here for some testing. I will put this very long line here for some testing.
 In addition, there are some settings that will be passed to the `MetricReader`.
 These can be set in the `ReaderConfig`
 
 <!-- markdownlint-disable MD013 -->
 | Name                   | Type     | Description                                          | Default            |
 |------------------------|----------|------------------------------------------------------|--------------------|
-| `exportIntervalMillis` | `number` | The interval<br/> in which metrics are exported.          | 60000 (60 seconds) |
+| `exportIntervalMillis` | `number` | The interval in which metrics are exported.          | 60000 (60 seconds) |
 | `exportTimeoutMillis`  | `number` | The maximum timeout to wait for an export to finish. | 30000 (30 seconds) |
 <!-- markdownlint-enable MD013 -->
 
