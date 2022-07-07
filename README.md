@@ -97,8 +97,28 @@ A full setup is provided in our [example project](samples/sample.js).
 
 ### Configuration
 
-The exporter allows for configuring the following settings by passing them to
-the exporter configuration in `configureDynatraceMetricExport`:
+The exporter allows for configuring the following settings by setting them in
+the `ExporterConfig` in `configureDynatraceMetricExport`:
+
+
+| Name                          | Type               | Description                                                                                              |
+|-------------------------------|--------------------|----------------------------------------------------------------------------------------------------------|
+| `prefix`                      | `string`           | See [Metric key prefix](#metric-key-prefix).                                                             |
+| `defaultDimensions`           | `Array<Dimension>` | Dimensions to be added to all metrics.<br/>A dimension is an object with a `key` and a `value` property. |
+| `url`                         | `string`           | See [Endpoint](#dynatrace-api-endpoint).                                                                 |
+| `apiToken`                    | `string`           | See [API token](#dynatrace-api-token).                                                                   |
+| `dynatraceMetadataEnrichment` | `boolean`          | See [Dynatrace Metadata enrichment](#dynatrace-metadata-enrichment).                                     |
+| `maxRetries`                  | `number`           | The number of times the exporter should retry before returning failure.                                  |
+| `retryDelay`                  | `number`           | The time in milliseconds to wait before retrying an export that failed due to a connection error.        |
+
+In addition, there are some settings that will be passed to the `MetricReader`.
+These can be set in the `ReaderConfig`
+
+| Name                   | Type     | Description                                          | Default            |
+|------------------------|----------|------------------------------------------------------|--------------------|
+| `exportIntervalMillis` | `number` | The interval in which metrics are exported.          | 60000 (60 seconds) |
+| `exportTimeoutMillis`  | `number` | The maximum timeout to wait for an export to finish. | 30000 (30 seconds) |
+
 
 #### Dynatrace API Endpoint
 
