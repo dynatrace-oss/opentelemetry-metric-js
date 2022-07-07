@@ -87,7 +87,7 @@ const requestCounter = meter.createCounter('requests', {
   description: 'Example of a Counter',
 });
 // ... and start recording metrics:
-requestCounter.add(2)
+requestCounter.add(2);
 ```
 
 Metrics are exported periodically, depending on the value of
