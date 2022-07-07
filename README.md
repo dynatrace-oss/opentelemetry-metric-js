@@ -35,11 +35,15 @@ The Dynatrace OpenTelemetry exporter requires the following prerequisites:
 # Optional - update NPM
 npm install --global npm
 
-# Install peer dependency @opentelemetry/api
-npm install @opentelemetry/api
-
 # Install the Dynatrace OpenTelemetry Metrics Exporter using NPM
 npm install @dynatrace/opentelemetry-exporter-metrics
+```
+
+If you are using a node version < 7, please install the `@opentelemetry/api` peer dependency manually.
+
+```sh
+# Install peer dependency @opentelemetry/api
+npm install @opentelemetry/api
 ```
 
 ### Initialize components
