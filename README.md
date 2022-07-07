@@ -93,7 +93,7 @@ requestCounter.add(2)
 Metrics are exported periodically, depending on the value of
 exportIntervalMillis set above.
 
-A full setup is provided in our [example project](samples/).
+A full setup is provided in our [example project](samples/sample.js).
 
 ### Configuration
 
