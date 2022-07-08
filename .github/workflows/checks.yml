@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  SUPPORTED_VERSIONS: '[12,14,16]'
+  SUPPORTED_VERSIONS: '[14,16,18]'
 
 jobs:
   supported-versions:

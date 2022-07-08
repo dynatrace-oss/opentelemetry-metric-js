@@ -14,5 +14,5 @@
 	limitations under the License.
 */
 
-export * from "./MetricExporter";
+export * from "./DynatraceMetricExport";
 export * from "./types";

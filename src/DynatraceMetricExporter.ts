@@ -61,7 +61,7 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		});
 
 		const urlObj = new URL(config.url ?? getDefaultOneAgentEndpoint());
-		const proto = this._getHttpProto(urlObj);
+		const proto = DynatraceMetricExporter._getHttpProto(urlObj);
 		this._httpRequest = proto.request;
 
 		const headers: Record<string, string> = {
@@ -70,7 +70,7 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		};
 
 		// eslint-disable-next-line deprecation/deprecation
-		const apiToken = config.apiToken ?? config.APIToken;
+		const apiToken = config.apiToken ?? config.APIToken; // NOSONAR
 		if (apiToken) {
 			headers.Authorization = `Api-Token ${apiToken}`;
 		}
@@ -101,7 +101,9 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 	}
 
 	// nothing is buffered so there is no need to flush
-	forceFlush(): Promise<void> { return Promise.resolve(); }
+	forceFlush(): Promise<void> {
+		return Promise.resolve();
+	}
 
 	export(metrics: ResourceMetrics, resultCallback: (result: ExportResult) => void): void {
 		if (this._isShutdown) {
@@ -123,11 +125,13 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 						lines = lines.concat(this.serializeCounter(metric));
 						break;
 					case InstrumentType.OBSERVABLE_GAUGE:
+						lines = lines.concat(this.serializeGauge(metric));
+						break;
 					case InstrumentType.UP_DOWN_COUNTER:
-						lines.push(...this.serializeGauge(metric));
+						lines = lines.concat(this.serializeUpDownCounter(metric));
 						break;
 					case InstrumentType.HISTOGRAM:
-						lines.push(...this.serializeHistogram(metric));
+						lines = lines.concat(this.serializeHistogram(metric));
 						break;
 					default:
 				}
@@ -214,7 +218,7 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		request.end(payload);
 	}
 
-	private _getHttpProto(urlObj: url.URL) {
+	private static _getHttpProto(urlObj: url.URL) {
 		let proto: typeof https | typeof http;
 		switch (urlObj.protocol) {
 			case "http:":
@@ -243,6 +247,11 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 			return out;
 		}
 
+		if (metric.aggregationTemporality === AggregationTemporality.CUMULATIVE) {
+			diag.warn(`dropping cumulative sum (${metric.descriptor.name})`);
+			return out;
+		}
+
 		for (const point of metric.dataPoints) {
 			const counter = this._dtMetricFactory.createCounterDelta(metric.descriptor.name, dimensionsFromPoint(point), point.value);
 			if (counter) {
@@ -256,9 +265,23 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		return out;
 	}
 
+	private serializeUpDownCounter(metric: MetricData): string[] {
+		if (metric.aggregationTemporality !== AggregationTemporality.CUMULATIVE) {
+			diag.warn(`dropping non-cumulative non-monotonic sum (${metric.descriptor.name})`);
+			return [];
+		}
+
+		return this.serializeGauge(metric);
+	}
+
 	private serializeHistogram(metric: MetricData): string[] {
 		const out: string[] = [];
 		if (metric.dataPointType !== DataPointType.HISTOGRAM) {
+			return out;
+		}
+
+		if (metric.aggregationTemporality === AggregationTemporality.CUMULATIVE) {
+			diag.warn(`dropping cumulative histogram (${metric.descriptor.name})`);
 			return out;
 		}
 

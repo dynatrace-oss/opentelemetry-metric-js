@@ -2,34 +2,36 @@
 
 const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
 const { Resource } = require('@opentelemetry/resources');
-const { MeterProvider, PeriodicExportingMetricReader, ConsoleMetricExporter, AggregationTemporality } = require('@opentelemetry/sdk-metrics-base');
-const { DynatraceMetricExporter } = require('..');
+const { MeterProvider } = require('@opentelemetry/sdk-metrics-base');
+const { configureDynatraceMetricExport } = require('..');
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
 
-let exporter = new DynatraceMetricExporter({
-  prefix: 'sample', // optional
+const reader = configureDynatraceMetricExport(
+  // ExporterConfig
+  {
+    prefix: 'sample', // optional
 
-  // If no OneAgent is available locally, export directly to the Dynatrace server:
-  // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
-  // apiToken: '<load API token from secure location such as env or config file>'
-});
-
-
-// You can use the ConsoleExporter for testing locally
-// exporter = new ConsoleMetricExporter(AggregationTemporality.DELTA);
+    // If no OneAgent is available locally, export directly to the Dynatrace server:
+    // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
+    // apiToken: '<load API token from secure location such as env or config file>'
+  },
+  // ReaderConfig
+  {
+    exportIntervalMillis: 5000
+  }
+);
 
 const provider = new MeterProvider({ resource: new Resource({ 'service.name': 'opentelemetry-metrics-sample-dynatrace' }) });
-const reader = new PeriodicExportingMetricReader({ exporter, exportIntervalMillis: 1000 });
 provider.addMetricReader(reader);
 const meter = provider.getMeter('opentelemetry-metrics-sample-dynatrace');
 
 const requestCounter = meter.createCounter('requests', {
-  description: 'Example of a Counter',
+  description: 'Example of a Counter'
 });
 
 const upDownCounter = meter.createUpDownCounter('test_up_down_counter', {
-  description: 'Example of a UpDownCounter',
+  description: 'Example of a UpDownCounter'
 });
 const attributes = { pid: process.pid, environment: 'staging' };
 

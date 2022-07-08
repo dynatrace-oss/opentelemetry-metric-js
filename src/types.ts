@@ -15,6 +15,7 @@
 */
 
 import { Dimension } from "@dynatrace/metric-utils";
+
 export { Dimension } from "@dynatrace/metric-utils";
 
 /**
@@ -22,10 +23,10 @@ export { Dimension } from "@dynatrace/metric-utils";
  */
 export interface ExporterConfig {
 	/**
-   * App prefix for metrics, if needed
-   *
-   * @default ''
-   * */
+	 * App prefix for metrics, if needed
+	 *
+	 * @default ''
+	 * */
 	prefix?: string;
 
 	/**
@@ -60,12 +61,32 @@ export interface ExporterConfig {
 	dynatraceMetadataEnrichment?: boolean;
 
 	/**
-	 * The number of times the exporter should retry before returning failure (default: 3)
+	 * The number of times the exporter should retry before returning failure
+	 *
+	 * @default 3
 	 */
-	maxRetries? : number;
+	maxRetries?: number;
 
 	/**
-	 * The time in milliseconds to wait before retrying an export that failed due to a connection error (default: 1000)
+	 * The time in milliseconds to wait before retrying an export that failed due to a connection error
+	 *
+	 * @default 1000
 	 */
-	retryDelay? : number;
+	retryDelay?: number;
+}
+
+export interface ReaderConfig {
+	/**
+	 * The interval in which metrics are exported using the PeriodicExportingMetricReader
+	 *
+	 * @default 60000
+	 */
+	exportIntervalMillis?: number;
+
+	/**
+	 * The maximum timeout to wait for an export to finish
+	 *
+	 * @default 30000
+	 */
+	exportTimeoutMillis?: number;
 }

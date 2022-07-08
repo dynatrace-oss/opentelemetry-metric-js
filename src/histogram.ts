@@ -73,7 +73,7 @@ function estimateHistMinMax(point: DataPoint<Histogram>): { min: number; max: nu
 
 	// Use upper bound for max unless it is the last bucket which has no upper bound, then use lower
 	if (maxCountIdx === counts.length - 1) {
-		max = boundaries[maxCountIdx-1];
+		max = boundaries[maxCountIdx - 1];
 	} else {
 		max = boundaries[maxCountIdx];
 	}

@@ -1,37 +1,50 @@
 # Dynatrace OpenTelemetry Metrics Exporter for JavaScript
 
 > This exporter is based on the OpenTelemetry Metrics SDK for JavaScript,
-> which is currently in an alpha state and neither considered stable nor
+> which is currently in an RC state and neither considered stable nor
 > complete as of this writing.
 > As such, this exporter is not intended for production use until the
 > underlying OpenTelemetry Metrics API and SDK are stable.
 > See [open-telemetry/opentelemetry-js](https://github.com/open-telemetry/opentelemetry-js)
 > for the current state of the OpenTelemetry SDK for JavaScript.
 
+This exporter allows exporting metrics created using the [OpenTelemetry SDK for JavaScript](https://github.com/open-telemetry/opentelemetry-js)
+directly to [Dynatrace](https://www.dynatrace.com).
+
+It was built against OpenTelemetry SDK version `0.29.0`.
+
+More information on exporting OpenTelemetry metrics to Dynatrace can be found in
+the [Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/opentelemetry-metrics).
+
 ## Getting started
 
 The general setup of OpenTelemetry JS is explained in the official
-[Getting Started Guide](https://github.com/open-telemetry/opentelemetry-js/blob/master/getting-started/README.md).
+[Getting Started Guide](https://opentelemetry.io/docs/instrumentation/js/getting-started/nodejs/).
 
 Using the Metrics API is explained in the
-[Monitor Your NodeJS Application section](https://github.com/open-telemetry/opentelemetry-js/blob/master/getting-started/README.md#monitor-your-nodejs-application).
+[Monitor Your NodeJS Application section](https://opentelemetry.io/docs/instrumentation/js/getting-started/nodejs/#metrics).
 
 ### Install Dependencies
 
 The Dynatrace OpenTelemetry exporter requires the following prerequisites:
 
-- [Node.js 12+](https://nodejs.org/en/)
-- NPM (6+ recommended, included with Node.js)
+- [Node.js 14+](https://nodejs.org/en/)
+- NPM (8+ recommended, included with Node.js)
 
 ```sh
 # Optional - update NPM
 npm install --global npm
 
-# Install the OpenTelemetry metrics SDK using NPM
-npm install @opentelemetry/metrics
-
 # Install the Dynatrace OpenTelemetry Metrics Exporter using NPM
 npm install @dynatrace/opentelemetry-exporter-metrics
+```
+
+If you are using a `npm` version < 7, please install the `@opentelemetry/api`
+peer dependency manually.
+
+```sh
+# Install peer dependency @opentelemetry/api
+npm install @opentelemetry/api
 ```
 
 ### Initialize components
@@ -39,56 +52,81 @@ npm install @dynatrace/opentelemetry-exporter-metrics
 The Dynatrace exporter is added and set-up like this:
 
 ```js
-const { MeterProvider } = require('@opentelemetry/metrics');
-const {
-  DynatraceMetricExporter,
-} = require('@dynatrace/opentelemetry-exporter-metrics');
+const { configureDynatraceMetricExport } = require('@dynatrace/opentelemetry-exporter-metrics');
+const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
+const { Resource } = require('@opentelemetry/resources');
+const { MeterProvider } = require('@opentelemetry/sdk-metrics-base');
 
-// configure API endpoint and authentication token
-const exporter = new DynatraceMetricExporter({
-  prefix: 'MyPrefix', // optional
-  defaultDimensions: [{ // optional
-    key: "default-dimension",
-    value: "with-value"
-  }]
+// optional: set up logging for OpenTelemetry
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 
-  // If no OneAgent is available locally, export directly to the Dynatrace server:
-  // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
-  // apiToken: '<load API token from secure location such as env or config file>'
+// configure the export to Dynatrace
+const reader = configureDynatraceMetricExport(
+  // exporter configuration
+  {
+    prefix: 'my_prefix', // optional
+    defaultDimensions: [   // optional
+      { key: 'default-dim', value: 'default-dim-value' },
+    ],
+
+    // If no OneAgent is available locally, set up url and token and export
+    // directly to the Dynatrace server:
+    // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
+    // apiToken: '<load API token from secure location such as env or config file>'
+  },
+  // metric reader configuration
+  {
+    exportIntervalMillis: 5000,
+  }
+);
+
+const provider = new MeterProvider({
+  resource: new Resource({'service.name': 'your-service-name'})
 });
 
-const meter = new MeterProvider({
-  exporter,
-  interval: 1000,
-}).getMeter('opentelemetry-metrics-sample-dynatrace');
+provider.addMetricReader(reader);
+const meter = provider.getMeter('opentelemetry-metrics-sample-dynatrace');
 
+// Your SDK should be set up correctly now. You can create instruments...
 const requestCounter = meter.createCounter('requests', {
   description: 'Example of a Counter',
 });
-
-const upDownCounter = meter.createUpDownCounter('test_up_down_counter', {
-  description: 'Example of a UpDownCounter',
-});
-
-const attributes = { pid: process.pid, environment: 'staging' };
-
-setInterval(() => {
-  requestCounter.bind(attributes).add(1);
-  upDownCounter.bind(attributes).add(Math.random() > 0.5 ? 1 : -1);
-}, 1000);
+// ... and start recording metrics:
+requestCounter.add(2);
 ```
 
-If a batching processor is used, a batch size of 1000 or less is recommended.
-If a batch larger than 1000 metrics is exported, it will be exported using
-multiple requests. If any request fails, the entire batch will be considered
-to have failed.
+Metrics are exported periodically, depending on the value of
+exportIntervalMillis set above.
 
-A full setup is provided in our [example project](samples/).
+A full setup is provided in our [example project](samples/sample.js).
 
 ### Configuration
 
-The exporter allows for configuring the following settings by passing them to
-the constructor:
+The exporter allows for configuring the following settings by setting them in
+the `ExporterConfig` in `configureDynatraceMetricExport`:
+
+<!-- disable long lines and inline HTML elements checking for the table -->
+<!-- markdownlint-disable MD013 MD033 -->
+| Name                          | Type               | Description                                                          |
+|-------------------------------|--------------------|----------------------------------------------------------------------|
+| `prefix`                      | `string`           | See [Metric key prefix](#metric-key-prefix).                         |
+| `defaultDimensions`           | `Array<Dimension>` | See [Default attributes](#default-attributesdimensions)              |
+| `url`                         | `string`           | See [Endpoint](#dynatrace-api-endpoint).                             |
+| `apiToken`                    | `string`           | See [API token](#dynatrace-api-token).                               |
+| `dynatraceMetadataEnrichment` | `boolean`          | See [Dynatrace Metadata enrichment](#dynatrace-metadata-enrichment). |
+| `maxRetries`                  | `number`           | See [Retries on Connection Failure](#retries-on-connection-failure). |
+| `retryDelay`                  | `number`           | See [Retries on Connection Failure](#retries-on-connection-failure). |
+<!-- markdownlint-enable MD013 MD033 -->
+
+In addition, there are some settings that will be passed to the `MetricReader`.
+These can be set in the `ReaderConfig`
+
+<!-- markdownlint-disable MD013 -->
+| Name                   | Type     | Description                                          | Default            |
+|------------------------|----------|------------------------------------------------------|--------------------|
+| `exportIntervalMillis` | `number` | The interval in which metrics are exported.          | 60000 (60 seconds) |
+| `exportTimeoutMillis`  | `number` | The maximum timeout to wait for an export to finish. | 30000 (30 seconds) |
+<!-- markdownlint-enable MD013 -->
 
 #### Dynatrace API Endpoint
 
@@ -105,7 +143,8 @@ would be `https://myenv123.live.dynatrace.com/api/v2/metrics/ingest`.
 If a OneAgent is installed on the host, it can provide a local endpoint for
 providing metrics directly without the need for an API token.
 Depending on your environment, this feature might have to be enabled as
-described in the [OneAgent metric API documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/local-api/)
+described in the
+[OneAgent metric API documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/local-api/)
 first.
 Using the local API endpoint, the host ID and host name context are
 automatically added to each metric as dimensions.
@@ -154,5 +193,14 @@ If running on a host with a running OneAgent, the exporter will export metadata
 collected by the OneAgent to the Dynatrace endpoint.
 This typically consists of the Dynatrace host ID and process group ID.
 More information on the underlying feature used by the exporter can be found in
-the [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
-By default this option is turned on.
+the
+[Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
+By default, this option is turned on.
+
+## Histogram
+
+OpenTelemetry Histograms are exported to Dynatrace as statistical summaries
+consisting of a minimum and maximum value, the total sum of all values, and the
+count of the values summarized. If the min and max values are not directly
+available on the metric data point, estimations based on the boundaries of the
+first and last buckets containing values are used.

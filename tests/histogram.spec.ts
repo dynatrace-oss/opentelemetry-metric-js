@@ -58,8 +58,8 @@ describe("estimateHistogram", () => {
 			},
 			{
 				description: "only last bucket has values",
-				boundaries: [1,2,3,4,5],
-				counts: [0,0,0,0,0,3],
+				boundaries: [1, 2, 3, 4, 5],
+				counts: [0, 0, 0, 0, 0, 3],
 				sum: 15.6,
 				expectedMin: 5
 			}
@@ -126,22 +126,22 @@ describe("estimateHistogram", () => {
 			},
 			{
 				description: "Max is larger than the sum, use the estimated boundary.",
-				boundaries: [0,5],
-				counts: [0,2,0],
+				boundaries: [0, 5],
+				counts: [0, 2, 0],
 				sum: 2.3,
 				expectedMax: 5
 			},
 			{
 				description: "Only the first bucket has a value, use the upper bound.",
-				boundaries: [1,2,3,4,5],
-				counts: [3,0,0,0,0,0],
+				boundaries: [1, 2, 3, 4, 5],
+				counts: [3, 0, 0, 0, 0, 0],
 				sum: 1.5,
 				expectedMax: 1
 			},
 			{
 				description: "Sum is smaller than the largest bucket bound, mean is larger. Use mean. Otherwise, max would be estimated as -5 and max >= avg would be violated",
-				boundaries: [-10,-5],
-				counts: [0,0,3],
+				boundaries: [-10, -5],
+				counts: [0, 0, 3],
 				sum: -7.5,
 				expectedMax: -2.5
 			}
