@@ -73,6 +73,9 @@ describe("estimateHistogram", () => {
 					startTime: [0, 0],
 					value: {
 						sum: testCase.sum,
+						hasMinMax: false,
+						min: Infinity,
+						max: -1,
 						buckets: {
 							boundaries: testCase.boundaries,
 							counts: testCase.counts
@@ -154,6 +157,9 @@ describe("estimateHistogram", () => {
 					endTime: [0, 0],
 					startTime: [0, 0],
 					value: {
+						hasMinMax: false,
+						min: Infinity,
+						max: -1,
 						sum: testCase.sum,
 						buckets: {
 							boundaries: testCase.boundaries,
@@ -167,5 +173,53 @@ describe("estimateHistogram", () => {
 				expect(summary.max).toBeCloseTo(testCase.expectedMax);
 			});
 		}
+	});
+
+	test("should take available min/max values with min/max present", () => {
+		const summary = estimateHistogram({
+			attributes: {},
+			endTime: [0, 0],
+			startTime: [0, 0],
+			value: {
+				hasMinMax: true,
+				min: 9,
+				max: 21,
+				sum: 30,
+				buckets: {
+					boundaries: [10, 20],
+					counts: [0, 2, 0]
+				},
+				count: 2
+			}
+		});
+
+		assert.ok(summary);
+		expect(summary.min).toBeCloseTo(9);
+		expect(summary.max).toBeCloseTo(21);
+	});
+
+	test("should return all 0 on empty histogram", () => {
+		const summary = estimateHistogram({
+			attributes: {},
+			endTime: [0, 0],
+			startTime: [0, 0],
+			value: {
+				hasMinMax: false,
+				min: Infinity,
+				max: -1,
+				sum: 0,
+				buckets: {
+					boundaries: [10, 20],
+					counts: [0, 0, 0]
+				},
+				count: 0
+			}
+		});
+
+		assert.ok(summary);
+		expect(summary.sum).toBe(0);
+		expect(summary.count).toBe(0);
+		expect(summary.min).toBe(0);
+		expect(summary.max).toBe(0);
 	});
 });

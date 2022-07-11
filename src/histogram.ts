@@ -22,7 +22,7 @@ export function estimateHistogram(point: DataPoint<Histogram>): SummaryValue {
 		return { count: 0, sum: 0, min: 0, max: 0 };
 	}
 
-	const { min, max } = estimateHistMinMax(point);
+	const { min, max } = getMinMax(point);
 
 	return {
 		count: point.value.count,
@@ -30,6 +30,14 @@ export function estimateHistogram(point: DataPoint<Histogram>): SummaryValue {
 		max,
 		min
 	};
+}
+
+function getMinMax(point: DataPoint<Histogram>): { min: number; max: number } {
+	if (point.value.hasMinMax) {
+		return { min: point.value.min, max: point.value.max };
+	}
+
+	return estimateHistMinMax(point);
 }
 
 // Expect to be called only with points that contain actual data (point.value.count > 0)
