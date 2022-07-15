@@ -175,7 +175,7 @@ describe("estimateHistogram", () => {
 		}
 	});
 
-	test("should take available min/max values with min/max present", () => {
+	test("should take min/max when present", () => {
 		const summary = estimateHistogram({
 			attributes: {},
 			endTime: [0, 0],
