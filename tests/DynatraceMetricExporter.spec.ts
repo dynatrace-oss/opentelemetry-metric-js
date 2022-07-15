@@ -96,7 +96,7 @@ describe("MetricExporter.export", () => {
 		};
 	}
 
-	function getHistogramResourceMetric(name: string, aggregationTemporality: AggregationTemporality): ResourceMetrics {
+	function getHistogramResourceMetric(name: string, aggregationTemporality: AggregationTemporality, extrema?: { min: number; max: number }): ResourceMetrics {
 		return {
 			resource: new Resource({}),
 			scopeMetrics: [{
@@ -123,6 +123,9 @@ describe("MetricExporter.export", () => {
 								startTime: [0, 0],
 								value: {
 									sum: 22.4,
+									hasMinMax: extrema != null,
+									min: extrema?.min ?? Infinity,
+									max: extrema?.max ?? -1,
 									buckets: {
 										boundaries: [1, 3, 5, 10],
 										counts: [3, 1, 2, 0, 1]
@@ -136,9 +139,6 @@ describe("MetricExporter.export", () => {
 			}]
 		};
 	}
-
-
-
 
 	test("should export metrics and return a success message", (done) => {
 		const target_host = "https://example.com:8080";
@@ -613,7 +613,7 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
-	test("should export summary for delta histogram", (done) => {
+	test("should export summary for delta histogram without min/max", (done) => {
 		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -627,6 +627,28 @@ describe("MetricExporter.export", () => {
 			.reply(200);
 
 		exporter.export(getHistogramResourceMetric("metric", AggregationTemporality.DELTA),
+			(result: ExportResult) => {
+				expect(result.code).toEqual(ExportResultCode.SUCCESS);
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
+				done();
+			});
+	});
+
+	test("should export summary for delta histogram with min/max", (done) => {
+		const target_host = "https://example.com:8080";
+		const target_path = "/metrics";
+		const target_url = target_host + target_path;
+		const exporter = new DynatraceMetricExporter({
+			url: target_url
+		});
+
+		const scope: nock.Scope = nock(target_host)
+			.post(target_path, "metric,key=value gauge,min=0.9,max=10.1,sum=22.4,count=7")
+			.once()
+			.reply(200);
+
+		exporter.export(getHistogramResourceMetric("metric", AggregationTemporality.DELTA, { min: 0.9, max: 10.1 }),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				expect(scope.activeMocks()).toHaveLength(0);
@@ -698,6 +720,9 @@ describe("MetricExporter.export", () => {
 									startTime: [0, 0],
 									value: {
 										sum: 22.4,
+										hasMinMax: false,
+										min: Infinity,
+										max: -1,
 										buckets: {
 											boundaries: [1, 3, 5, 10],
 											counts: [3, 1, 2, 0, 1]
