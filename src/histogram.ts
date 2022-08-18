@@ -30,6 +30,7 @@ export function estimateHistogram(point: DataPoint<Histogram>): SummaryValue {
 
 function estimateSingleBucketHistogram(point: DataPoint<Histogram>): { min: number; max: number; sum: number } {
 	const sum = point.value.sum ?? 0;
+	// Only called after checking that count > 0
 	const mean = sum / point.value.count;
 
 	return { min: point.value.min ?? mean, max: point.value.max ?? mean, sum };
