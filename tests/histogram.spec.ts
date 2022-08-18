@@ -73,9 +73,6 @@ describe("estimateHistogram", () => {
 					startTime: [0, 0],
 					value: {
 						sum: testCase.sum,
-						hasMinMax: false,
-						min: Infinity,
-						max: -1,
 						buckets: {
 							boundaries: testCase.boundaries,
 							counts: testCase.counts
@@ -157,9 +154,6 @@ describe("estimateHistogram", () => {
 					endTime: [0, 0],
 					startTime: [0, 0],
 					value: {
-						hasMinMax: false,
-						min: Infinity,
-						max: -1,
 						sum: testCase.sum,
 						buckets: {
 							boundaries: testCase.boundaries,
@@ -175,13 +169,67 @@ describe("estimateHistogram", () => {
 		}
 	});
 
+	describe("sum estimation", () => {
+		const cases = [
+			{
+				description: "Zero count histogram, estimate zero as no values were added",
+				boundaries: [],
+				counts: [0],
+				expectedSum: 0
+			},
+			{
+				description: "Single bucket histogram, estimate zero (midpoint of -Inf,+Inf)",
+				boundaries: [],
+				counts: [13],
+				expectedSum: 0
+			},
+			{
+				description: "Data in bounded buckets, estimate sum using bucket midpoints.",
+				boundaries: [1, 2, 3, 4, 5],
+				counts: [0, 3, 5, 0, 0, 0],
+				expectedSum: (3 * 1.5) + (5 * 2.5)
+			},
+			{
+				description: "Data in first unbounded bucket, estimate sum using bucket upper bound.",
+				boundaries: [1, 2, 3, 4, 5],
+				counts: [2, 3, 5, 0, 0, 0],
+				expectedSum: (1 * 2) + (3 * 1.5) + (5 * 2.5)
+			},
+			{
+				description: "Data in last unbounded bucket, estimate sum using bucket lower bound.",
+				boundaries: [1, 2, 3, 4, 5],
+				counts: [0, 3, 5, 0, 0, 2],
+				expectedSum: (3 * 1.5) + (5 * 2.5) + (2 * 5)
+			}
+		];
+
+		for (const testCase of cases) {
+			test(testCase.description, () => {
+				const summary = estimateHistogram({
+					attributes: {},
+					endTime: [0, 0],
+					startTime: [0, 0],
+					value: {
+						buckets: {
+							boundaries: testCase.boundaries,
+							counts: testCase.counts
+						},
+						count: testCase.counts.reduce((p, c) => p + c)
+					}
+				});
+
+				assert.ok(summary);
+				expect(summary.sum).toBeCloseTo(testCase.expectedSum);
+			});
+		}
+	});
+
 	test("should take min/max when present", () => {
 		const summary = estimateHistogram({
 			attributes: {},
 			endTime: [0, 0],
 			startTime: [0, 0],
 			value: {
-				hasMinMax: true,
 				min: 9,
 				max: 21,
 				sum: 30,
@@ -204,9 +252,6 @@ describe("estimateHistogram", () => {
 			endTime: [0, 0],
 			startTime: [0, 0],
 			value: {
-				hasMinMax: false,
-				min: Infinity,
-				max: -1,
 				sum: 0,
 				buckets: {
 					boundaries: [10, 20],

@@ -60,13 +60,45 @@ describe("DynatraceMetricExporter", () => {
 describe("MetricExporter.export", () => {
 	beforeEach(() => nock.cleanAll());
 
+	function getCounterResourceMetric(
+		name: string,
+		value: number,
+		attributes: MetricAttributes,
+		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
+	): ResourceMetrics {
+		// @ts-ignore bla
+		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.COUNTER, DataPointType.SUM, true);
+	}
+
+	function getUpDownCounterResourceMetric(
+		name: string,
+		value: number,
+		attributes: MetricAttributes,
+		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
+	): ResourceMetrics {
+		// @ts-ignore bla
+		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.UP_DOWN_COUNTER, DataPointType.SUM, false);
+	}
+
+	function getObservableGaugeResourceMetric(
+		name: string,
+		value: number,
+		attributes: MetricAttributes,
+		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
+	): ResourceMetrics {
+		// @ts-ignore bla
+		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.OBSERVABLE_GAUGE, DataPointType.GAUGE);
+	}
+
 	function getResourceMetric(
 		name: string,
 		value: number,
 		attributes: MetricAttributes,
 		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA,
-		instrumentType: InstrumentType = InstrumentType.COUNTER
-	): ResourceMetrics {
+		instrumentType: InstrumentType = InstrumentType.COUNTER,
+		dataPointType: DataPointType,
+		isMonotonic?: boolean
+	) {
 		return {
 			resource: new Resource({}),
 			scopeMetrics: [{
@@ -76,7 +108,8 @@ describe("MetricExporter.export", () => {
 				metrics: [
 					{
 						aggregationTemporality: aggregationTemporality,
-						dataPointType: DataPointType.SINGULAR,
+						dataPointType: dataPointType,
+						isMonotonic: isMonotonic,
 						descriptor: {
 							description: "a data point",
 							name,
@@ -123,9 +156,8 @@ describe("MetricExporter.export", () => {
 								startTime: [0, 0],
 								value: {
 									sum: 22.4,
-									hasMinMax: extrema != null,
-									min: extrema?.min ?? Infinity,
-									max: extrema?.max ?? -1,
+									min: extrema?.min,
+									max: extrema?.max,
 									buckets: {
 										boundaries: [1, 3, 5, 10],
 										counts: [3, 1, 2, 0, 1]
@@ -156,7 +188,7 @@ describe("MetricExporter.export", () => {
 			.once()
 			.reply(200);
 
-		exporter.export(getResourceMetric("test", 10, { key: "value" }),
+		exporter.export(getCounterResourceMetric("test", 10, { key: "value" }),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				// the request was sent once, no pending mocks are available
@@ -185,7 +217,7 @@ describe("MetricExporter.export", () => {
 					.once()
 					.reply(responseCode);
 
-				exporter.export(getResourceMetric("test", 10, { key: "value" }),
+				exporter.export(getCounterResourceMetric("test", 10, { key: "value" }),
 					(result: ExportResult) => {
 						expect(result.code).toEqual(ExportResultCode.FAILED);
 						// the request was sent once, no pending mocks are available
@@ -218,7 +250,7 @@ describe("MetricExporter.export", () => {
 			.post(target_path, /test,key=value count,delta=10/g)
 			.replyWithError({});
 
-		exporter.export(getResourceMetric("test", 10, { key: "value" }),
+		exporter.export(getCounterResourceMetric("test", 10, { key: "value" }),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.FAILED);
 
@@ -242,7 +274,7 @@ describe("MetricExporter.export", () => {
 			.once()
 			.reply(200);
 
-		exporter.export(getResourceMetric("~!@", 10, {}),
+		exporter.export(getCounterResourceMetric("~!@", 10, {}),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				expect(scope.activeMocks()).toHaveLength(0);
@@ -275,7 +307,8 @@ describe("MetricExporter.export", () => {
 				metrics: [
 					{
 						aggregationTemporality: AggregationTemporality.DELTA,
-						dataPointType: DataPointType.SINGULAR,
+						dataPointType: DataPointType.SUM,
+						isMonotonic: true,
 						descriptor: {
 							description: "empty metric",
 							name: "metric_name",
@@ -320,7 +353,8 @@ describe("MetricExporter.export", () => {
 				metrics: [
 					{
 						aggregationTemporality: AggregationTemporality.DELTA,
-						dataPointType: DataPointType.SINGULAR,
+						dataPointType: DataPointType.SUM,
+						isMonotonic: true,
 						descriptor: {
 							description: "invalid data point (empty name)",
 							name: "",
@@ -368,7 +402,8 @@ describe("MetricExporter.export", () => {
 				metrics: [
 					{
 						aggregationTemporality: AggregationTemporality.DELTA,
-						dataPointType: DataPointType.SINGULAR,
+						dataPointType: DataPointType.SUM,
+						isMonotonic: true,
 						descriptor: {
 							description: "invalid data point (empty name)",
 							name: "",
@@ -387,7 +422,8 @@ describe("MetricExporter.export", () => {
 					},
 					{
 						aggregationTemporality: AggregationTemporality.DELTA,
-						dataPointType: DataPointType.SINGULAR,
+						dataPointType: DataPointType.SUM,
+						isMonotonic: true,
 						descriptor: {
 							description: "valid data point",
 							name: "valid",
@@ -438,7 +474,8 @@ describe("MetricExporter.export", () => {
 				},
 				metrics: [...Array(1001).keys()].map((v: number) => ({
 					aggregationTemporality: AggregationTemporality.DELTA,
-					dataPointType: DataPointType.SINGULAR,
+					dataPointType: DataPointType.SUM,
+					isMonotonic: true,
 					descriptor: {
 						description: "a data point",
 						name: "metric" + v.toString(),
@@ -484,7 +521,7 @@ describe("MetricExporter.export", () => {
 			.once()
 			.reply(200);
 
-		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.COUNTER),
+		exporter.export(getCounterResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				// the request was sent once, no pending mocks are available
@@ -506,7 +543,7 @@ describe("MetricExporter.export", () => {
 			.post(target_path)
 			.reply(200);
 
-		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE, InstrumentType.COUNTER),
+		exporter.export(getCounterResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				// there should still be an unused active mock
@@ -530,12 +567,12 @@ describe("MetricExporter.export", () => {
 			.twice()
 			.reply(200);
 
-		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE, InstrumentType.OBSERVABLE_GAUGE),
+		exporter.export(getObservableGaugeResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 			});
 
-		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.OBSERVABLE_GAUGE),
+		exporter.export(getObservableGaugeResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				// the request was sent twice, no pending mocks are available
@@ -558,7 +595,7 @@ describe("MetricExporter.export", () => {
 			.once()
 			.reply(200);
 
-		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE, InstrumentType.UP_DOWN_COUNTER),
+		exporter.export(getUpDownCounterResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.CUMULATIVE),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				// the request was sent once, no pending mocks are available
@@ -580,7 +617,7 @@ describe("MetricExporter.export", () => {
 			.post(target_path)
 			.reply(200);
 
-		exporter.export(getResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.UP_DOWN_COUNTER),
+		exporter.export(getUpDownCounterResourceMetric("test", 3.2, { key: "value" }, AggregationTemporality.DELTA),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
 				// there should still be an unused active mock
@@ -657,7 +694,7 @@ describe("MetricExporter.export", () => {
 			});
 	});
 
-	test("should not export histogram with non-histogram point data", (done) => {
+	test("should export non-histogram instrument with histogram point data", (done) => {
 		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
 		const target_url = target_host + target_path;
@@ -666,31 +703,8 @@ describe("MetricExporter.export", () => {
 		});
 
 		const scope: nock.Scope = nock(target_host)
-			.post(target_path)
-			.reply(200);
-
-		exporter.export(
-			// generates a histogram with number data points (not histogram data points)
-			getResourceMetric("metric", 1.2, { key: "value" }, AggregationTemporality.DELTA, InstrumentType.HISTOGRAM),
-			(result: ExportResult) => {
-				expect(result.code).toEqual(ExportResultCode.SUCCESS);
-				// there should still be an unused active mock
-				expect(scope.activeMocks()).toHaveLength(1);
-				expect(scope.pendingMocks()).toHaveLength(1);
-				done();
-			});
-	});
-
-	test("should not export non-histogram types with histogram point data", (done) => {
-		const target_host = "https://example.com:8080";
-		const target_path = "/metrics";
-		const target_url = target_host + target_path;
-		const exporter = new DynatraceMetricExporter({
-			url: target_url
-		});
-
-		const scope: nock.Scope = nock(target_host)
-			.post(target_path)
+			.post(target_path, "metric,key=value gauge,min=0.9,max=10.1,sum=22.4,count=7")
+			.once()
 			.reply(200);
 
 		function createNonHistogramMetricsWithHistogramDataPoints(instrumentType: InstrumentType): ResourceMetrics {
@@ -720,9 +734,8 @@ describe("MetricExporter.export", () => {
 									startTime: [0, 0],
 									value: {
 										sum: 22.4,
-										hasMinMax: false,
-										min: Infinity,
-										max: -1,
+										min: 0.9,
+										max: 10.1,
 										buckets: {
 											boundaries: [1, 3, 5, 10],
 											counts: [3, 1, 2, 0, 1]
@@ -738,25 +751,12 @@ describe("MetricExporter.export", () => {
 		}
 
 		exporter.export(
-			// generates number metric with histogram data points
 			createNonHistogramMetricsWithHistogramDataPoints(InstrumentType.COUNTER),
 			(result: ExportResult) => {
 				expect(result.code).toEqual(ExportResultCode.SUCCESS);
-			});
-
-		exporter.export(
-			createNonHistogramMetricsWithHistogramDataPoints(InstrumentType.OBSERVABLE_GAUGE),
-			(result: ExportResult) => {
-				expect(result.code).toEqual(ExportResultCode.SUCCESS);
-			});
-
-		exporter.export(
-			createNonHistogramMetricsWithHistogramDataPoints(InstrumentType.UP_DOWN_COUNTER),
-			(result: ExportResult) => {
-				expect(result.code).toEqual(ExportResultCode.SUCCESS);
-				// there should still be an unused active mock
-				expect(scope.activeMocks()).toHaveLength(1);
-				expect(scope.pendingMocks()).toHaveLength(1);
+				// there should no unused active mock
+				expect(scope.activeMocks()).toHaveLength(0);
+				expect(scope.pendingMocks()).toHaveLength(0);
 				done();
 			});
 	});
