@@ -66,7 +66,7 @@ describe("MetricExporter.export", () => {
 		attributes: MetricAttributes,
 		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
 	): ResourceMetrics {
-		// @ts-ignore bla
+		// @ts-ignore this is guaranteed to be a ResourceMetric
 		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.COUNTER, DataPointType.SUM, true);
 	}
 
@@ -76,7 +76,7 @@ describe("MetricExporter.export", () => {
 		attributes: MetricAttributes,
 		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
 	): ResourceMetrics {
-		// @ts-ignore bla
+		// @ts-ignore this is guaranteed to be a ResourceMetric
 		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.UP_DOWN_COUNTER, DataPointType.SUM, false);
 	}
 
@@ -86,7 +86,7 @@ describe("MetricExporter.export", () => {
 		attributes: MetricAttributes,
 		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
 	): ResourceMetrics {
-		// @ts-ignore bla
+		// @ts-ignore this is guaranteed to be a ResourceMetric
 		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.OBSERVABLE_GAUGE, DataPointType.GAUGE);
 	}
 
