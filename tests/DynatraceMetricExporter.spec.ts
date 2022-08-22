@@ -60,118 +60,6 @@ describe("DynatraceMetricExporter", () => {
 describe("MetricExporter.export", () => {
 	beforeEach(() => nock.cleanAll());
 
-	function getCounterResourceMetric(
-		name: string,
-		value: number,
-		attributes: MetricAttributes,
-		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
-	): ResourceMetrics {
-		// @ts-ignore this is guaranteed to be a ResourceMetric
-		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.COUNTER, DataPointType.SUM, true);
-	}
-
-	function getUpDownCounterResourceMetric(
-		name: string,
-		value: number,
-		attributes: MetricAttributes,
-		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
-	): ResourceMetrics {
-		// @ts-ignore this is guaranteed to be a ResourceMetric
-		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.UP_DOWN_COUNTER, DataPointType.SUM, false);
-	}
-
-	function getObservableGaugeResourceMetric(
-		name: string,
-		value: number,
-		attributes: MetricAttributes,
-		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
-	): ResourceMetrics {
-		// @ts-ignore this is guaranteed to be a ResourceMetric
-		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.OBSERVABLE_GAUGE, DataPointType.GAUGE);
-	}
-
-	function getResourceMetric(
-		name: string,
-		value: number,
-		attributes: MetricAttributes,
-		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA,
-		instrumentType: InstrumentType = InstrumentType.COUNTER,
-		dataPointType: DataPointType,
-		isMonotonic?: boolean
-	) {
-		return {
-			resource: new Resource({}),
-			scopeMetrics: [{
-				scope: {
-					name: "myscope"
-				},
-				metrics: [
-					{
-						aggregationTemporality: aggregationTemporality,
-						dataPointType: dataPointType,
-						isMonotonic: isMonotonic,
-						descriptor: {
-							description: "a data point",
-							name,
-							type: instrumentType,
-							unit: "",
-							valueType: ValueType.DOUBLE
-						},
-						dataPoints: [{
-							attributes,
-							endTime: [0, 0],
-							startTime: [0, 0],
-							value
-						}]
-					}
-				]
-			}]
-		};
-	}
-
-	function getHistogramResourceMetric(name: string, aggregationTemporality: AggregationTemporality, extrema?: { min: number; max: number }): ResourceMetrics {
-		return {
-			resource: new Resource({}),
-			scopeMetrics: [{
-				scope: {
-					name: "myscope"
-				},
-				metrics: [
-					{
-						aggregationTemporality: aggregationTemporality,
-						dataPointType: DataPointType.HISTOGRAM,
-						descriptor: {
-							description: "a histogram",
-							name: name,
-							type: InstrumentType.HISTOGRAM,
-							unit: "",
-							valueType: ValueType.DOUBLE
-						},
-						dataPoints: [
-							{
-								attributes: {
-									key: "value"
-								},
-								endTime: [0, 0],
-								startTime: [0, 0],
-								value: {
-									sum: 22.4,
-									min: extrema?.min,
-									max: extrema?.max,
-									buckets: {
-										boundaries: [1, 3, 5, 10],
-										counts: [3, 1, 2, 0, 1]
-									},
-									count: 7
-								}
-							}
-						]
-					}
-				]
-			}]
-		};
-	}
-
 	test("should export metrics and return a success message", (done) => {
 		const target_host = "https://example.com:8080";
 		const target_path = "/metrics";
@@ -821,4 +709,115 @@ describe("MetricExporter.export", () => {
 			);
 	});
 
+	function getCounterResourceMetric(
+		name: string,
+		value: number,
+		attributes: MetricAttributes,
+		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
+	): ResourceMetrics {
+		// @ts-ignore this is guaranteed to be a ResourceMetric
+		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.COUNTER, DataPointType.SUM, true);
+	}
+
+	function getUpDownCounterResourceMetric(
+		name: string,
+		value: number,
+		attributes: MetricAttributes,
+		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
+	): ResourceMetrics {
+		// @ts-ignore this is guaranteed to be a ResourceMetric
+		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.UP_DOWN_COUNTER, DataPointType.SUM, false);
+	}
+
+	function getObservableGaugeResourceMetric(
+		name: string,
+		value: number,
+		attributes: MetricAttributes,
+		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
+	): ResourceMetrics {
+		// @ts-ignore this is guaranteed to be a ResourceMetric
+		return getResourceMetric(name, value, attributes, aggregationTemporality, InstrumentType.OBSERVABLE_GAUGE, DataPointType.GAUGE);
+	}
+
+	function getResourceMetric(
+		name: string,
+		value: number,
+		attributes: MetricAttributes,
+		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA,
+		instrumentType: InstrumentType = InstrumentType.COUNTER,
+		dataPointType: DataPointType,
+		isMonotonic?: boolean
+	) {
+		return {
+			resource: new Resource({}),
+			scopeMetrics: [{
+				scope: {
+					name: "myscope"
+				},
+				metrics: [
+					{
+						aggregationTemporality: aggregationTemporality,
+						dataPointType: dataPointType,
+						isMonotonic: isMonotonic,
+						descriptor: {
+							description: "a data point",
+							name,
+							type: instrumentType,
+							unit: "",
+							valueType: ValueType.DOUBLE
+						},
+						dataPoints: [{
+							attributes,
+							endTime: [0, 0],
+							startTime: [0, 0],
+							value
+						}]
+					}
+				]
+			}]
+		};
+	}
+
+	function getHistogramResourceMetric(name: string, aggregationTemporality: AggregationTemporality, extrema?: { min: number; max: number }): ResourceMetrics {
+		return {
+			resource: new Resource({}),
+			scopeMetrics: [{
+				scope: {
+					name: "myscope"
+				},
+				metrics: [
+					{
+						aggregationTemporality: aggregationTemporality,
+						dataPointType: DataPointType.HISTOGRAM,
+						descriptor: {
+							description: "a histogram",
+							name: name,
+							type: InstrumentType.HISTOGRAM,
+							unit: "",
+							valueType: ValueType.DOUBLE
+						},
+						dataPoints: [
+							{
+								attributes: {
+									key: "value"
+								},
+								endTime: [0, 0],
+								startTime: [0, 0],
+								value: {
+									sum: 22.4,
+									min: extrema?.min,
+									max: extrema?.max,
+									buckets: {
+										boundaries: [1, 3, 5, 10],
+										counts: [3, 1, 2, 0, 1]
+									},
+									count: 7
+								}
+							}
+						]
+					}
+				]
+			}]
+		};
+	}
 });
