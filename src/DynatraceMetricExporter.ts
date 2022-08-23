@@ -341,11 +341,17 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 }
 
 function dimensionsFromPoint(point: DataPoint<unknown>): Dimension[] {
-	return Object.entries(point.attributes).map(([key, value]) => {
-		if (typeof value === "string") {
-			return { key, value: value };
-		}
-
-		return { key, value: JSON.stringify(value) };
-	});
+	return Object.entries(point.attributes)
+		.filter(function(entry): entry is [string, string | number] {
+			const value = entry[1];
+			const type = typeof value;
+			const valid = type === "string" || type === "number" || type === "boolean" || type === "bigint" || type === "symbol";
+			if (!valid) {
+				diag.warn(`Skipping unsupported dimension with value type '${value}'`);
+			}
+			return valid;
+		})
+		.map(([key, value]) => {
+			return { key, value: value.toString() };
+		});
 }
