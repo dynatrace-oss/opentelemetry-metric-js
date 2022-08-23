@@ -252,13 +252,13 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 	}
 
 	private serializeMonotonicSum(metric: SumMetricData): string[] {
-		const out: string[] = [];
 
 		if (metric.aggregationTemporality === AggregationTemporality.CUMULATIVE) {
 			diag.warn(`dropping cumulative sum (${metric.descriptor.name})`);
-			return out;
+			return [];
 		}
 
+		const out: string[] = [];
 		for (const point of metric.dataPoints) {
 			const counter = this._dtMetricFactory.createCounterDelta(metric.descriptor.name, dimensionsFromPoint(point), point.value);
 			if (counter) {
@@ -273,23 +273,12 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 	}
 
 	private serializeNonMonotonicSum(metric: SumMetricData): string[] {
-		const out: string[] = [];
 		if (metric.aggregationTemporality !== AggregationTemporality.CUMULATIVE) {
 			diag.warn(`dropping non-cumulative non-monotonic sum (${metric.descriptor.name})`);
 			return [];
 		}
 
-		for (const point of metric.dataPoints) {
-			const gauge = this._dtMetricFactory.createGauge(metric.descriptor.name, dimensionsFromPoint(point), point.value);
-			if (gauge) {
-				const serialized = gauge.serialize();
-				if (serialized) {
-					out.push(serialized);
-				}
-			}
-		}
-
-		return out;
+		return this.serializeGaugesFromNumberDataPoints(metric.descriptor.name, metric.dataPoints);
 	}
 
 	private serializeHistogram(metric: HistogramMetricData): string[] {
@@ -324,10 +313,14 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 	}
 
 	private serializeGauge(metric: GaugeMetricData): string[] {
-		const out: string[] = [];
+		// no guard clauses necessary, gauges can be mapped 1:1
+		return this.serializeGaugesFromNumberDataPoints(metric.descriptor.name, metric.dataPoints);
+	}
 
-		for (const point of metric.dataPoints) {
-			const gauge = this._dtMetricFactory.createGauge(metric.descriptor.name, dimensionsFromPoint(point), point.value);
+	private serializeGaugesFromNumberDataPoints(metricName: string, dataPoints: DataPoint<number>[]) {
+		const out: string[] = [];
+		for (const point of dataPoints) {
+			const gauge = this._dtMetricFactory.createGauge(metricName, dimensionsFromPoint(point), point.value);
 			if (gauge) {
 				const serialized = gauge.serialize();
 				if (serialized) {
