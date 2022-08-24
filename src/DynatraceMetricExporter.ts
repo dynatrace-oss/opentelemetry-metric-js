@@ -340,7 +340,7 @@ function dimensionsFromPoint(point: DataPoint<unknown>): Dimension[] {
 			const type = typeof value;
 			const valid = (type === "string");
 			if (!valid) {
-				diag.warn(`Skipping unsupported dimension with value type '${value}'`);
+				diag.warn(`Skipping unsupported dimension '${entry[0]}' with value type '${type}'`);
 			}
 			return valid;
 		})
