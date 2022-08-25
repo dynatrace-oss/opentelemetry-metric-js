@@ -17,7 +17,17 @@
 import { Dimension, getDefaultOneAgentEndpoint, getDynatraceMetadata, MetricFactory } from "@dynatrace/metric-utils";
 import { diag } from "@opentelemetry/api";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";
-import { AggregationTemporality, DataPoint, DataPointType, InstrumentType, MetricData, PushMetricExporter, ResourceMetrics } from "@opentelemetry/sdk-metrics-base";
+import {
+	AggregationTemporality,
+	DataPoint,
+	DataPointType,
+	GaugeMetricData,
+	HistogramMetricData,
+	InstrumentType,
+	PushMetricExporter,
+	ResourceMetrics,
+	SumMetricData
+} from "@opentelemetry/sdk-metrics-base";
 import * as http from "http";
 import * as https from "https";
 import * as url from "url";
@@ -119,18 +129,18 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		let lines: string[] = [];
 		for (const scopeMetric of metrics.scopeMetrics) {
 			for (const metric of scopeMetric.metrics) {
-				switch (metric.descriptor.type) {
-					case InstrumentType.COUNTER:
-					case InstrumentType.OBSERVABLE_COUNTER:
-						lines = lines.concat(this.serializeCounter(metric));
+				switch (metric.dataPointType) {
+					case DataPointType.SUM:
+						if (metric.isMonotonic) {
+							lines = lines.concat(this.serializeMonotonicSum(metric));
+						} else {
+							lines = lines.concat(this.serializeNonMonotonicSum(metric));
+						}
 						break;
-					case InstrumentType.OBSERVABLE_GAUGE:
+					case DataPointType.GAUGE:
 						lines = lines.concat(this.serializeGauge(metric));
 						break;
-					case InstrumentType.UP_DOWN_COUNTER:
-						lines = lines.concat(this.serializeUpDownCounter(metric));
-						break;
-					case InstrumentType.HISTOGRAM:
+					case DataPointType.HISTOGRAM:
 						lines = lines.concat(this.serializeHistogram(metric));
 						break;
 					default:
@@ -241,17 +251,14 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		return Promise.resolve();
 	}
 
-	private serializeCounter(metric: MetricData): string[] {
-		const out: string[] = [];
-		if (metric.dataPointType !== DataPointType.SINGULAR) {
-			return out;
-		}
+	private serializeMonotonicSum(metric: SumMetricData): string[] {
 
 		if (metric.aggregationTemporality === AggregationTemporality.CUMULATIVE) {
 			diag.warn(`dropping cumulative sum (${metric.descriptor.name})`);
-			return out;
+			return [];
 		}
 
+		const out: string[] = [];
 		for (const point of metric.dataPoints) {
 			const counter = this._dtMetricFactory.createCounterDelta(metric.descriptor.name, dimensionsFromPoint(point), point.value);
 			if (counter) {
@@ -265,20 +272,17 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		return out;
 	}
 
-	private serializeUpDownCounter(metric: MetricData): string[] {
+	private serializeNonMonotonicSum(metric: SumMetricData): string[] {
 		if (metric.aggregationTemporality !== AggregationTemporality.CUMULATIVE) {
 			diag.warn(`dropping non-cumulative non-monotonic sum (${metric.descriptor.name})`);
 			return [];
 		}
 
-		return this.serializeGauge(metric);
+		return this.serializeGaugesFromNumberDataPoints(metric.descriptor.name, metric.dataPoints);
 	}
 
-	private serializeHistogram(metric: MetricData): string[] {
+	private serializeHistogram(metric: HistogramMetricData): string[] {
 		const out: string[] = [];
-		if (metric.dataPointType !== DataPointType.HISTOGRAM) {
-			return out;
-		}
 
 		if (metric.aggregationTemporality === AggregationTemporality.CUMULATIVE) {
 			diag.warn(`dropping cumulative histogram (${metric.descriptor.name})`);
@@ -308,14 +312,15 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 		return out;
 	}
 
-	private serializeGauge(metric: MetricData): string[] {
-		const out: string[] = [];
-		if (metric.dataPointType !== DataPointType.SINGULAR) {
-			return out;
-		}
+	private serializeGauge(metric: GaugeMetricData): string[] {
+		// no guard clauses necessary, gauges can be mapped 1:1
+		return this.serializeGaugesFromNumberDataPoints(metric.descriptor.name, metric.dataPoints);
+	}
 
-		for (const point of metric.dataPoints) {
-			const gauge = this._dtMetricFactory.createGauge(metric.descriptor.name, dimensionsFromPoint(point), point.value);
+	private serializeGaugesFromNumberDataPoints(metricName: string, dataPoints: DataPoint<number>[]) {
+		const out: string[] = [];
+		for (const point of dataPoints) {
+			const gauge = this._dtMetricFactory.createGauge(metricName, dimensionsFromPoint(point), point.value);
 			if (gauge) {
 				const serialized = gauge.serialize();
 				if (serialized) {
@@ -329,5 +334,17 @@ export class DynatraceMetricExporter implements PushMetricExporter {
 }
 
 function dimensionsFromPoint(point: DataPoint<unknown>): Dimension[] {
-	return Object.entries(point.attributes).map(([key, value]) => ({ key, value }));
+	return Object.entries(point.attributes)
+		.filter(function(entry): entry is [string, string | number] {
+			const value = entry[1];
+			const type = typeof value;
+			const valid = (type === "string");
+			if (!valid) {
+				diag.warn(`Skipping unsupported dimension '${entry[0]}' with value type '${type}'`);
+			}
+			return valid;
+		})
+		.map(([key, value]) => {
+			return { key, value: value.toString() };
+		});
 }

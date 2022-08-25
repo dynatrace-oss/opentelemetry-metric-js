@@ -33,7 +33,10 @@ const requestCounter = meter.createCounter('requests', {
 const upDownCounter = meter.createUpDownCounter('test_up_down_counter', {
   description: 'Example of a UpDownCounter'
 });
-const attributes = { pid: process.pid, environment: 'staging' };
+const attributes = {
+  pid: process.pid.toString(),
+  environment: 'staging'
+};
 
 setInterval(() => {
   requestCounter.add(Math.round(Math.random() * 1000), attributes);
