@@ -15,7 +15,7 @@
 */
 
 import { ExporterConfig, ReaderConfig } from "./types";
-import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics-base";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { DynatraceMetricExporter } from "./DynatraceMetricExporter";
 
 /**
