@@ -15,7 +15,7 @@
 */
 
 import { SummaryValue } from "@dynatrace/metric-utils";
-import { DataPoint, Histogram } from "@opentelemetry/sdk-metrics-base";
+import { DataPoint, Histogram } from "@opentelemetry/sdk-metrics";
 
 export function estimateHistogram(point: DataPoint<Histogram>): SummaryValue {
 	const { min, max, sum } = estimateOptionalProperties(point);

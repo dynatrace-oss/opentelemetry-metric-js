@@ -27,7 +27,7 @@ import {
 	PushMetricExporter,
 	ResourceMetrics,
 	SumMetricData
-} from "@opentelemetry/sdk-metrics-base";
+} from "@opentelemetry/sdk-metrics";
 import * as http from "http";
 import * as https from "https";
 import * as url from "url";
