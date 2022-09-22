@@ -205,7 +205,7 @@ count of the values summarized. If the min and max values are not directly
 available on the metric data point, estimations based on the boundaries of the
 first and last buckets containing values are used.
 
-# Typed attributes support
+## Typed attributes support
 
 The OpenTelemetry Metrics API for JavaScript supports the concept of Attributes.
 These attributes consist of key-value pairs, where the keys are strings and the
