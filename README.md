@@ -197,7 +197,9 @@ the
 [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
 By default, this option is turned on.
 
-## Histogram
+## Limitations
+
+### Histogram
 
 OpenTelemetry Histograms are exported to Dynatrace as statistical summaries
 consisting of a minimum and maximum value, the total sum of all values, and the
@@ -205,7 +207,7 @@ count of the values summarized. If the min and max values are not directly
 available on the metric data point, estimations based on the boundaries of the
 first and last buckets containing values are used.
 
-## Typed attributes support
+### Typed attributes support
 
 The OpenTelemetry Metrics API for JavaScript supports the concept of Attributes.
 These attributes consist of key-value pairs, where the keys are strings and the
