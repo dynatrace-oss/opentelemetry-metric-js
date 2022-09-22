@@ -11,7 +11,7 @@
 This exporter allows exporting metrics created using the [OpenTelemetry SDK for JavaScript](https://github.com/open-telemetry/opentelemetry-js)
 directly to [Dynatrace](https://www.dynatrace.com).
 
-It was built against OpenTelemetry SDK version `0.32.0`.
+It was built against OpenTelemetry SDK version `0.33.0`.
 
 More information on exporting OpenTelemetry metrics to Dynatrace can be found in
 the [Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/opentelemetry-metrics).
@@ -204,3 +204,14 @@ consisting of a minimum and maximum value, the total sum of all values, and the
 count of the values summarized. If the min and max values are not directly
 available on the metric data point, estimations based on the boundaries of the
 first and last buckets containing values are used.
+
+# Typed attributes support
+
+The OpenTelemetry Metrics API for JavaScript supports the concept of Attributes.
+These attributes consist of key-value pairs, where the keys are strings and the
+values are either `string`, `bool`, or `number` or arrays of the previously
+mentioned types and also including `null` and `undefined`.
+
+At the moment, this exporter only supports attributes with string key and value
+type. This means that if attributes of any other type are used, they will be
+ignored and only the string-valued attributes are going to be sent to Dynatrace.
