@@ -207,13 +207,8 @@ count of the values summarized. If the min and max values are not directly
 available on the metric data point, estimations based on the boundaries of the
 first and last buckets containing values are used.
 
-### Typed attributes support
+### Attribute type limitations
 
-The OpenTelemetry Metrics API for JavaScript supports the concept of Attributes.
-These attributes consist of key-value pairs, where the keys are strings and the
-values are either `string`, `bool`, or `number` or arrays of the previously
-mentioned types and also including `null` and `undefined`.
-
-At the moment, this exporter only supports attributes with string key and value
-type. This means that if attributes of any other type are used, they will be
-ignored and only the string-valued attributes are going to be sent to Dynatrace.
+Currently, only `string` type attribute values are supported.
+Attributes with values of any other type will be dropped and not exported.
+If you need those values to be exported, please convert them to `string` type before export.
