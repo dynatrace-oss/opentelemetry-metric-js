@@ -9,13 +9,15 @@ diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
 
 // Configure a MeterProvider
 const provider = new MeterProvider({
-  resource: new Resource({ 'service.name': 'opentelemetry-metrics-sample-dynatrace' })
+  resource: new Resource({
+    'service.name': 'opentelemetry-metrics-sample-dynatrace'
+  })
 });
 
 const reader = configureDynatraceMetricExport(
   // exporter configuration
   {
-    prefix: 'sample', // optional
+    prefix: 'sample' // optional
 
     // If no OneAgent is available locally, export directly to the Dynatrace server:
     // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
