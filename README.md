@@ -55,7 +55,7 @@ The Dynatrace exporter is added and set-up like this:
 const { configureDynatraceMetricExport } = require('@dynatrace/opentelemetry-exporter-metrics');
 const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
 const { Resource } = require('@opentelemetry/resources');
-const { MeterProvider } = require('@opentelemetry/sdk-metrics-base');
+const { MeterProvider } = require('@opentelemetry/sdk-metrics');
 
 // optional: set up logging for OpenTelemetry
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
