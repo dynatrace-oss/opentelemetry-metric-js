@@ -11,7 +11,7 @@
 This exporter allows exporting metrics created using the [OpenTelemetry SDK for JavaScript](https://github.com/open-telemetry/opentelemetry-js)
 directly to [Dynatrace](https://www.dynatrace.com).
 
-It was built against OpenTelemetry SDK version `0.32.0`.
+It was built against OpenTelemetry SDK version `0.33.0`.
 
 More information on exporting OpenTelemetry metrics to Dynatrace can be found in
 the [Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/opentelemetry-metrics).
@@ -197,10 +197,19 @@ the
 [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
 By default, this option is turned on.
 
-## Histogram
+## Limitations
+
+### Histogram
 
 OpenTelemetry Histograms are exported to Dynatrace as statistical summaries
 consisting of a minimum and maximum value, the total sum of all values, and the
 count of the values summarized. If the min and max values are not directly
 available on the metric data point, estimations based on the boundaries of the
 first and last buckets containing values are used.
+
+### Attribute type limitations
+
+Currently, only `string` type attribute values are supported.
+Attributes with values of any other type will be dropped and not exported.
+If you need those values to be exported, please convert them to `string`
+type before export.
