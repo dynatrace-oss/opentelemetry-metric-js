@@ -211,4 +211,5 @@ first and last buckets containing values are used.
 
 Currently, only `string` type attribute values are supported.
 Attributes with values of any other type will be dropped and not exported.
-If you need those values to be exported, please convert them to `string` type before export.
+If you need those values to be exported, please convert them to `string`
+type before export.
