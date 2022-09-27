@@ -5,6 +5,7 @@ const { Resource } = require('@opentelemetry/resources');
 const { MeterProvider } = require('@opentelemetry/sdk-metrics');
 const { configureDynatraceMetricExport } = require('..');
 
+// optional: set up logging for OpenTelemetry
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
 
 // Configure a MeterProvider
@@ -17,8 +18,10 @@ const provider = new MeterProvider({
 const reader = configureDynatraceMetricExport(
   // exporter configuration
   {
-    prefix: 'sample' // optional
-
+    prefix: 'sample', // optional
+    defaultDimensions: [ // optional
+      { key: 'default-dim', value: 'default-dim-value' },
+    ],
     // If no OneAgent is available locally, export directly to the Dynatrace server:
     // url: 'https://myenv123.live.dynatrace.com/api/v2/metrics/ingest',
     // apiToken: '<load API token from secure location such as env or config file>'
