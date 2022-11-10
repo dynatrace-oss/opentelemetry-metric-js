@@ -16,7 +16,7 @@
 
 import { DynatraceMetricExporter } from "../src/DynatraceMetricExporter";
 import * as nock from "nock";
-import { MetricAttributes, ValueType } from "@opentelemetry/api-metrics";
+import { MetricAttributes, ValueType } from "@opentelemetry/api";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";
 import { Resource } from "@opentelemetry/resources";
 import { AggregationTemporality, DataPointType, InstrumentType, ResourceMetrics } from "@opentelemetry/sdk-metrics";
