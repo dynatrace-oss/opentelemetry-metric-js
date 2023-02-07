@@ -16,7 +16,7 @@
 
 import { DynatraceMetricExporter } from "../src/DynatraceMetricExporter";
 import * as nock from "nock";
-import { MetricAttributes, ValueType } from "@opentelemetry/api";
+import { Attributes, ValueType } from "@opentelemetry/api";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";
 import { Resource } from "@opentelemetry/resources";
 import { AggregationTemporality, DataPointType, InstrumentType, ResourceMetrics } from "@opentelemetry/sdk-metrics";
@@ -712,7 +712,7 @@ describe("MetricExporter.export", () => {
 	function getCounterResourceMetric(
 		name: string,
 		value: number,
-		attributes: MetricAttributes,
+		attributes: Attributes,
 		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
 	): ResourceMetrics {
 		// @ts-ignore this is guaranteed to be a ResourceMetric
@@ -722,7 +722,7 @@ describe("MetricExporter.export", () => {
 	function getUpDownCounterResourceMetric(
 		name: string,
 		value: number,
-		attributes: MetricAttributes,
+		attributes: Attributes,
 		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
 	): ResourceMetrics {
 		// @ts-ignore this is guaranteed to be a ResourceMetric
@@ -732,7 +732,7 @@ describe("MetricExporter.export", () => {
 	function getObservableGaugeResourceMetric(
 		name: string,
 		value: number,
-		attributes: MetricAttributes,
+		attributes: Attributes,
 		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA
 	): ResourceMetrics {
 		// @ts-ignore this is guaranteed to be a ResourceMetric
@@ -742,7 +742,7 @@ describe("MetricExporter.export", () => {
 	function getResourceMetric(
 		name: string,
 		value: number,
-		attributes: MetricAttributes,
+		attributes: Attributes,
 		aggregationTemporality: AggregationTemporality = AggregationTemporality.DELTA,
 		instrumentType: InstrumentType = InstrumentType.COUNTER,
 		dataPointType: DataPointType,
