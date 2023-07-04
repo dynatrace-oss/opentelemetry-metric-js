@@ -1,7 +1,20 @@
+[Dynatrace](https://www.dynatrace.com/integrations/opentelemetry) supports native
+OpenTelemetry protocol (OTLP) ingest for traces, metrics and logs.
+All signals can be sent directly to Dynatrace via **OTLP protobuf over HTTP**
+using the built-in OTLP/HTTP Exporter available in the OpenTelemetry JavaScript SDK.
+More information on configuring your JavaScript applications to use the OTLP exporter can be found in the
+[Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/otel-wt-nodejs#tabgroup--dynatrace-docs--otlp-export).
+
 # Dynatrace OpenTelemetry Metrics Exporter for JavaScript
 
-> This exporter is currently in RC state and therefore
-> not intended for production use.
+> **Warning**
+> Dynatrace supports native OpenTelemetry protocol (OTLP) ingest for traces, metrics and logs.
+> Therefore, the proprietary Dynatrace OpenTelemetry metrics exporter is deprecated in favor of exporting via OTLP/HTTP.
+>
+> The exporter is still available but after the end of 2023, no support, updates, or compatibility with newer OTel versions will be provided.
+>
+> Please refer to the [migration guide](https://www.dynatrace.com/support/help/shortlink/migrating-dynatrace-metrics-exporter-otlp-exporter#migrate-applications) for instructions on how to migrate to the OTLP HTTP exporter, as well as reasoning and benefits for this transition. For an example on how to configure the OTLP exporter in a JavaScript application, check out the [JavaScript integration walk-through](https://www.dynatrace.com/support/help/shortlink/otel-wt-nodejs#tabgroup--dynatrace-docs--otlp-export)
+> page in the Dynatrace documentation.
 
 This exporter allows exporting metrics created using the [OpenTelemetry SDK for JavaScript](https://github.com/open-telemetry/opentelemetry-js)
 directly to [Dynatrace](https://www.dynatrace.com).
