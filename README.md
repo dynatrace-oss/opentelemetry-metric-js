@@ -10,6 +10,7 @@ More information on configuring your JavaScript applications to use the OTLP exp
 ## Dynatrace OpenTelemetry Metrics Exporter for JavaScript
 ![Static Badge](https://img.shields.io/badge/status-deprecated-orange)
 
+<!-- markdownlint-disable -->
 > **Warning**
 > Dynatrace supports native OpenTelemetry protocol (OTLP) ingest for traces, metrics and logs.
 > Therefore, the proprietary Dynatrace OpenTelemetry metrics exporter is deprecated in favor of exporting via OTLP/HTTP.
