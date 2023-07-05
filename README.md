@@ -1,4 +1,5 @@
-<!-- markdownlint-disable -->
+# Dynatrace
+
 [Dynatrace](https://www.dynatrace.com/integrations/opentelemetry) supports native
 OpenTelemetry protocol (OTLP) ingest for traces, metrics and logs.
 All signals can be sent directly to Dynatrace via **OTLP protobuf over HTTP**
@@ -6,7 +7,8 @@ using the built-in OTLP/HTTP Exporter available in the OpenTelemetry JavaScript 
 More information on configuring your JavaScript applications to use the OTLP exporter can be found in the
 [Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/otel-wt-nodejs#tabgroup--dynatrace-docs--otlp-export).
 
-# Dynatrace OpenTelemetry Metrics Exporter for JavaScript
+## Dynatrace OpenTelemetry Metrics Exporter for JavaScript
+![Static Badge](https://img.shields.io/badge/status-deprecated-orange)
 
 > **Warning**
 > Dynatrace supports native OpenTelemetry protocol (OTLP) ingest for traces, metrics and logs.
@@ -26,7 +28,7 @@ It was built against OpenTelemetry SDK version `1.9.1`.
 More information on exporting OpenTelemetry metrics to Dynatrace can be found in
 the [Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/opentelemetry-metrics).
 
-## Getting started
+### Getting started
 
 The general setup of OpenTelemetry JS is explained in the official
 [Getting Started Guide](https://opentelemetry.io/docs/instrumentation/js/getting-started/nodejs/).
@@ -34,7 +36,7 @@ The general setup of OpenTelemetry JS is explained in the official
 Using the Metrics API is explained in the
 [Monitor Your NodeJS Application section](https://opentelemetry.io/docs/instrumentation/js/getting-started/nodejs/#metrics).
 
-### Install Dependencies
+#### Install Dependencies
 
 The Dynatrace OpenTelemetry exporter requires the following prerequisites:
 
@@ -57,7 +59,7 @@ peer dependency manually.
 npm install @opentelemetry/api
 ```
 
-### Initialize components
+#### Initialize components
 
 The Dynatrace exporter is added and set-up like this:
 
@@ -128,7 +130,7 @@ exportIntervalMillis set above.
 
 A full setup is provided in our [example project](samples/sample.js).
 
-### Configuration
+#### Configuration
 
 The exporter allows for configuring the following settings by setting them in
 the `ExporterConfig` in `configureDynatraceMetricExport`:
@@ -156,7 +158,7 @@ These can be set in the `ReaderConfig`
 | `exportTimeoutMillis`  | `number` | The maximum timeout to wait for an export to finish. | 30000 (30 seconds) |
 <!-- markdownlint-enable MD013 -->
 
-#### Dynatrace API Endpoint
+##### Dynatrace API Endpoint
 
 API Endpoint and Token are optional. By default, metrics will be exported to
 the local OneAgent endpoint described below, if it is available.
@@ -181,7 +183,7 @@ The default metric API endpoint exposed by the OneAgent is
 If no Dynatrace API endpoint is set, the exporter will default to the local
 OneAgent endpoint.
 
-#### Dynatrace API Token
+##### Dynatrace API Token
 
 Required only if an API endpoint is also provided.
 
@@ -195,17 +197,17 @@ The permission required for sending metrics is `Ingest metrics`
 (`metrics.ingest`) and it is recommended to limit scope to only
 this permission.
 
-#### Metric Key Prefix
+##### Metric Key Prefix
 
 The `prefix` parameter specifies an optional prefix, which is prepended to each
 metric key, separated by a dot (`<prefix>.<namespace>.<name>`).
 
-#### Default Attributes/Dimensions
+##### Default Attributes/Dimensions
 
 The `defaultDimensions` parameter can be used to optionally specify a list of key/value
 pairs, which will be added as additional attributes/dimensions to all data points.
 
-#### Retries on Connection Failure
+##### Retries on Connection Failure
 
 The `maxRetries` parameter can be used to set the amount of times the exporter should
 retry on connection failures. By default, the exporter will retry 3 times before
@@ -215,7 +217,7 @@ The `retryDelay` parameter can be used to set the time in milliseconds to wait u
 re-trying an export after a connection failure, the default is 1000ms. This number
 must be greater than or equal to 0.
 
-## Dynatrace Metadata Enrichment
+### Dynatrace Metadata Enrichment
 
 If running on a host with a running OneAgent, the exporter will export metadata
 collected by the OneAgent to the Dynatrace endpoint.
@@ -225,9 +227,9 @@ the
 [Dynatrace documentation](https://www.dynatrace.com/support/help/how-to-use-dynatrace/metrics/metric-ingestion/ingestion-methods/enrich-metrics/).
 By default, this option is turned on.
 
-## Limitations
+### Limitations
 
-### Histogram
+#### Histogram
 
 OpenTelemetry Histograms are exported to Dynatrace as statistical summaries
 consisting of a minimum and maximum value, the total sum of all values, and the
@@ -235,7 +237,7 @@ count of the values summarized. If the min and max values are not directly
 available on the metric data point, estimations based on the boundaries of the
 first and last buckets containing values are used.
 
-### Attribute type limitations
+#### Attribute type limitations
 
 Currently, only `string` type attribute values are supported.
 Attributes with values of any other type will be dropped and not exported.
