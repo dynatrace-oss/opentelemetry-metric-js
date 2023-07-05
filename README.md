@@ -4,10 +4,12 @@
 OpenTelemetry protocol (OTLP) ingest for traces, metrics and logs.
 All signals can be sent directly to Dynatrace via **OTLP protobuf over HTTP**
 using the built-in OTLP/HTTP Exporter available in the OpenTelemetry JavaScript SDK.
-More information on configuring your JavaScript applications to use the OTLP exporter can be found in the
+More information on configuring your JavaScript applications to use
+the OTLP exporter can be found in the
 [Dynatrace documentation](https://www.dynatrace.com/support/help/shortlink/otel-wt-nodejs#tabgroup--dynatrace-docs--otlp-export).
 
 ## Dynatrace OpenTelemetry Metrics Exporter for JavaScript
+
 ![Static Badge](https://img.shields.io/badge/status-deprecated-orange)
 
 <!-- markdownlint-disable -->
